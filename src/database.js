@@ -34,4 +34,54 @@ db.exec(`
   )
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS report_replies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
+  );
+`);
+
+// Migration: file attachment columns (replaces evidence link with upload).
+// evidence_url is kept for backward compatibility with old reports.
+for (const { name, ddl } of [
+  { name: "attachment_path", ddl: "ALTER TABLE reports ADD COLUMN attachment_path TEXT" },
+  { name: "attachment_name", ddl: "ALTER TABLE reports ADD COLUMN attachment_name TEXT" },
+  { name: "attachment_mimetype", ddl: "ALTER TABLE reports ADD COLUMN attachment_mimetype TEXT" },
+  {
+    name: "evidence_upload_enabled",
+    ddl: "ALTER TABLE reports ADD COLUMN evidence_upload_enabled INTEGER NOT NULL DEFAULT 0"
+  },
+]) {
+  const exists = db.prepare(`SELECT name FROM pragma_table_info('reports') WHERE name = ?`).get(name);
+  if (!exists) db.exec(ddl);
+}
+
+// Evidence uploads table: multiple files per report, independent of single attachment.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS report_evidence (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_mimetype TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (report_id) REFERENCES reports(id)
+  )
+`);
+
+// Evidence requests table: moderator requests for additional evidence.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS evidence_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (report_id) REFERENCES reports(id)
+  )
+`);
+
 module.exports = db;

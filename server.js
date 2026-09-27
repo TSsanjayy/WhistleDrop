@@ -1,13 +1,20 @@
 require("dotenv").config();
+
 const express = require("express");
-const db = require("./database");
-const reportsRouter = require("./routes/reports");
-const moderatorRouter = require("./routes/moderator");
+const path = require("path");
+
+require("./src/database");
+
+const reportsRouter = require("./src/routes/reports");
+const moderatorRouter = require("./src/routes/moderator");
+const { notFound, errorHandler } = require("./src/middleware/errorHandler");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
@@ -16,16 +23,8 @@ app.get("/health", (req, res) => {
 app.use("/reports", reportsRouter);
 app.use("/moderator", moderatorRouter);
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
-});
-
-app.use((err, req, res, next) => {
-  console.error(err);
-  res
-    .status(err.status || 500)
-    .json({ error: err.message || "Internal server error" });
-});
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`WhistleDrop server listening on port ${PORT}`);
