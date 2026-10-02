@@ -8,646 +8,243 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 <title>WhistleDrop — Speak Up. Stay Anonymous.</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    color-scheme:dark;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  color-scheme:dark;
+  --bg:#080807;--surface:#0f0f0d;--surface-2:#161613;--border:rgba(242,240,232,.16);
+  --text:#f2f0e8;--muted:#9a9a8e;--accent:#d7ff3f;--accent-2:#ffcc00;
+  --danger:#ff4438;--mono:"JetBrains Mono",ui-monospace,monospace;--display:"Space Grotesk",Inter,sans-serif;
+  --st-submitted:#69c5ff;--st-review:#ff8c42;--st-resolved:#6bffb0;--st-dismissed:#ff4438;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);overflow-y:scroll}
+body{min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);
+  background:linear-gradient(rgba(242,240,232,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(242,240,232,.045) 1px,transparent 1px),var(--bg);
+  background-size:48px 48px;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")}
+::selection{background:var(--accent);color:var(--bg)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(242,240,232,.22);border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+*{scrollbar-width:thin;scrollbar-color:rgba(242,240,232,.25) transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-    --bg:#0a0a08;
-    --surface:#121210;
-    --surface-2:#1a1a17;
-    --border:rgba(242,240,232,.16);
+/* Background watermarks */
+.wm{position:fixed;pointer-events:none;user-select:none;z-index:0}
+.diag{top:50%;left:50%;width:250vmax;transform:translate(-50%,-50%) rotate(-18deg);display:flex;justify-content:center;align-items:center}
+.diag span{font:800 16px var(--mono);letter-spacing:.5em;text-transform:uppercase;color:rgba(242,240,232,.05);white-space:nowrap}
+.diag .stamp{font:700 clamp(48px,9vw,120px) var(--display);letter-spacing:.08em;color:transparent;-webkit-text-stroke:1.6px rgba(215,255,63,.07);margin:0 .6em}
+.mark{font:700 var(--s) var(--display);color:transparent;white-space:nowrap;letter-spacing:.05em;text-transform:uppercase;
+  top:var(--t);left:var(--l);right:var(--rt);bottom:var(--b);transform:rotate(var(--r));-webkit-text-stroke:1.2px rgba(242,240,232,.05)}
+.mark.a{-webkit-text-stroke-color:rgba(215,255,63,.06)}
+.side{top:0;height:100vh;display:none;flex-direction:column;justify-content:space-between;align-items:center;padding:70px 0}
+.side span{writing-mode:vertical-rl;font:700 11px var(--mono);letter-spacing:.4em;text-transform:uppercase;color:rgba(242,240,232,.07)}
+.side.l{left:10px}.side.l span{transform:rotate(180deg)}.side.r{right:10px}
+@media(min-width:1100px){.side{display:flex}}
+@media(max-width:1100px){.mark{display:none}}
 
-    --text:#f2f0e8;
-    --muted:#9a9a8e;
+/* Layout */
+nav,main{position:relative;z-index:1}
+nav{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 28px 0;padding-top:calc(env(safe-area-inset-top,0px) + 16px)}
+.logo-line{font:900 clamp(34px,6vw,52px)/1 var(--display);letter-spacing:-1.5px;text-transform:uppercase}
+.logo-line b{color:var(--accent)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:2px dashed var(--border);color:var(--muted);
+  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+nav .eyebrow{margin-top:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+.nav-links{display:flex;gap:4px;margin-top:8px}
+.nav-btn{position:relative;border:2px solid transparent;background:none;color:var(--muted);padding:10px 15px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.nav-btn:hover,.nav-btn.active{color:var(--text);border-color:transparent}
+.nav-btn::after{content:"";position:absolute;left:15px;right:15px;bottom:2px;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.nav-btn.active::after{transform:scaleX(1)}
+main{padding:0 28px 40px}
+.hero{text-align:center;padding:0 0 8px;margin-top:-14px}
+h1{font:900 clamp(38px,7vw,64px)/.98 var(--display);letter-spacing:-2.5px;margin-bottom:14px;text-transform:uppercase}
+h1 span{color:var(--accent)}
+.hero p{color:var(--muted);font-size:15px;line-height:1.65;max-width:520px;margin:0 auto}
+.narrow{max-width:1100px;margin:26px auto 0}
+.view{display:none}.view.active{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}}
 
-    --accent:#d7ff3f;
-    --accent-2:#ffcc00;
+/* Panel */
+.panel{position:relative;background:var(--surface);border:2px solid var(--border);border-radius:4px;padding:40px 44px;margin-bottom:12px;
+  box-shadow:6px 6px 0 rgba(215,255,63,.06);overflow:hidden}
+.panel::before{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 16px 16px 0;border-color:transparent var(--bg) transparent transparent;z-index:2}
+.panel>*{position:relative;z-index:1}
+.doc-thread{position:absolute!important;left:0;right:0;top:50%;transform:translateY(-50%);display:flex;justify-content:space-between;padding:0 2px;pointer-events:none;z-index:0!important}
+.doc-thread span{font:700 11px var(--mono);letter-spacing:.25em;text-transform:uppercase;color:rgba(242,240,232,.06)}
+.panel-header{position:relative;padding-left:20px;margin-bottom:28px}
+.panel-header::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:4px;background:var(--accent)}
+.eyebrow-label{display:block;font:800 11px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.panel-header h2{font:900 30px/1.15 var(--display);letter-spacing:-.5px;margin-bottom:10px;text-transform:uppercase}
+.panel-header p{color:var(--muted);font-size:14.5px;line-height:1.6}
 
-    --success:#6bffb0;
-    --danger:#ff4438;
-    --warn:#ffc53d;
+/* Forms */
+.field{margin-bottom:22px}
+label{display:block;margin-bottom:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input,textarea,select{width:100%;border:2px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:2px;padding:14px 16px;font:inherit;font-size:14.5px;line-height:1.5;transition:border-color .15s}
+input:hover,textarea:hover,select:hover{border-color:rgba(242,240,232,.28)}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);outline:none}
+textarea{min-height:130px;resize:vertical}
+::placeholder{color:#5f5f56}
+select option{background:var(--surface-2)}
+.attach{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:2px dashed var(--border);padding:10px 12px;color:var(--muted);font-size:13px}
+.attach input{width:auto;border:0;background:none;padding:0;color:transparent;max-width:120px}
+.attach span{flex:1;min-width:180px}
+.hint{color:var(--muted);font:12px var(--mono);flex-basis:100%}
+input[type=file]::file-selector-button{margin-right:10px;padding:9px 13px;border:2px solid var(--border);background:none;color:var(--text);font:700 12px Inter,sans-serif;text-transform:uppercase;cursor:pointer;border-radius:2px}
+input[type=file]::file-selector-button:hover{border-color:var(--accent);color:var(--accent)}
+.pw{position:relative}.pw input{padding-right:52px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;color:var(--muted);padding:8px;display:flex}
 
-    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  html{scroll-padding-top:env(safe-area-inset-top,0px)}
-  html{
-    overflow-y:scroll;
-  }
-  body{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-    background:
-      linear-gradient(rgba(242,240,232,.05) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(242,240,232,.05) 1px,transparent 1px),
-      var(--bg);
-    background-size:48px 48px,48px 48px;
-    color:var(--text);
-    position:relative;overflow-x:hidden;
-    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-  body::before{display:none}
-  .particle{display:none}
-  .bg-glyph{display:none}
-  .curve-lines{display:none}
+/* Buttons */
+button{font-family:inherit;border-radius:2px;border:2px solid var(--border);background:transparent;color:var(--text);cursor:pointer;transition:.15s}
+button:hover{border-color:var(--accent);color:var(--accent)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.primary{width:100%;padding:15px;background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800;font-size:13.5px;letter-spacing:.06em;text-transform:uppercase;
+  box-shadow:5px 5px 0 var(--accent);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,box-shadow .12s,background .12s}
+.primary.inline{width:auto;padding:13px 22px}
+.primary:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:var(--bg);transform:translate(2px,2px);box-shadow:3px 3px 0 var(--text)}
+.primary:active:not(:disabled){transform:translate(5px,5px);box-shadow:none}
+.primary:disabled{box-shadow:none}
+.primary.danger{background:#d93636;border-color:#d93636;color:#fff;box-shadow:none}
+.secondary,.copy-btn{padding:10px 14px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.secondary.danger{color:#ff6b6b;border-color:#ff6b6b}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(10,10,8,.25);border-top-color:var(--bg);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row .field{flex:1;min-width:160px}
+.back-link{border:0;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
 
-  ::selection{background:var(--accent);color:#0a0a08}
-  ::-webkit-scrollbar{width:10px;height:10px}
-  ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:rgba(242,240,232,.22);border-radius:0;border:2px solid var(--bg)}
-  ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-  *{scrollbar-width:thin;scrollbar-color:rgba(242,240,232,.25) transparent}
+/* Messages */
+.message{display:none;margin-top:16px;padding:13px 14px;border:2px solid var(--border);font:12.5px/1.5 var(--mono)}
+.message.error{display:block;background:rgba(255,68,56,.08);border-color:var(--danger);color:#ff9a92}
+.message.success{display:block;background:rgba(107,255,176,.08);border-color:var(--st-resolved);color:#9dffcf}
+.message.info{display:block;background:rgba(215,255,63,.06);border-color:var(--accent);color:var(--accent)}
 
-  nav,main{position:relative;z-index:1}
-  nav{min-height:70px;display:flex;align-items:flex-start;justify-content:space-between;width:100%;margin:0;padding:6px 28px 0;
-    padding-top:calc(env(safe-area-inset-top,0px) + 6px);
-    position:relative}
-  .logo{display:flex;flex-direction:column;align-items:flex-start;line-height:1;margin-top:2px;transform:translate(10px,10px);cursor:default}
-  .logo-line{font-size:52px;letter-spacing:-1.5px;display:flex;align-items:baseline;gap:2px;line-height:1;color:var(--text);
-    font-weight:900;text-transform:uppercase}
-  .logo-line .w-thin{font-weight:900;letter-spacing:-1.5px;color:var(--text)}
-  .logo-line .w-bold{font-weight:900;letter-spacing:-1.5px;
-    color:var(--accent);
-    -webkit-text-stroke:0;
-    filter:none}
-  .logo .eyebrow{margin-top:12px;margin-bottom:0;font-size:11px;padding:6px 12px}
-  .nav-links{display:flex;gap:4px;margin-top:26px}
-  .nav-btn{position:relative;border:2px solid transparent;background:transparent;color:var(--muted);padding:10px 15px;border-radius:0;
-    cursor:pointer;font:inherit;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;transition:.15s}
-  .nav-btn:hover{color:var(--text)}
-  .nav-btn.active{color:var(--text)}
-  .nav-btn::after{
-    content:"";position:absolute;left:15px;right:15px;bottom:2px;height:3px;
-    background:var(--accent);
-    transform:scaleX(0);transform-origin:left;transition:transform .25s cubic-bezier(.4,0,.2,1);
-  }
-  .nav-btn.active::after{transform:scaleX(1)}
-  .nav-btn:focus-visible,.primary:focus-visible,.copy-btn:focus-visible,.secondary:focus-visible,
-  input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  main{width:100%;margin:-38px 0 0;padding:0 28px 24px}
-  .hero{position:relative;text-align:center;width:100%;margin:0 0 4px;padding-top:24px;overflow:hidden}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border:2px solid var(--border);border-radius:0;
-    background:transparent;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px}
-  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
-  h1{position:relative;font-size:clamp(38px,7vw,64px);line-height:.98;letter-spacing:-2.5px;margin:0 0 14px;transform:translateY(-24px);
-    font-weight:900;text-transform:uppercase}
-  h1 span{color:var(--accent);background:none;-webkit-text-stroke:0}
-  .hero p{position:relative;color:var(--muted);font-size:15px;line-height:1.65;margin:0;letter-spacing:0;max-width:520px;margin-left:auto;margin-right:auto}
-  .view{display:none}
-  .view.active{display:block;animation:fadeIn .2s ease}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .panel{position:relative;
-    background:var(--surface);
-    border:2px solid var(--border);border-radius:4px;padding:40px 44px;
-    box-shadow:8px 8px 0 rgba(215,255,63,.08);
-    margin-bottom:16px 0 24px;overflow:hidden;
-    margin-bottom:12px}
-  .panel-header{position:relative;padding-left:20px;margin-bottom:28px}
-  .panel-header::before{content:"";position:absolute;left:0;top:2px;bottom:2px;width:4px;border-radius:0;
-    background:var(--accent)}
-  .panel-header .eyebrow-label{display:block;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
-    color:var(--accent);margin-bottom:10px;font-family:"JetBrains Mono",ui-monospace,monospace}
-  .panel-header h2{font-size:30px;font-weight:900;letter-spacing:-.5px;line-height:1.15;margin-bottom:10px;text-transform:uppercase}
-  .panel-header p{color:var(--muted);font-size:14.5px;line-height:1.6}
+/* Case code */
+.case-box{display:none;margin-top:20px;padding:22px 22px 22px 26px;border:2px solid var(--accent);background:rgba(215,255,63,.05)}
+.case-box p{color:var(--muted);font-size:13px;margin-bottom:6px}
+.case-code{margin:10px 0 14px;padding:14px;background:#050504;border:2px solid var(--border);word-break:break-all;font:800 14px var(--mono);color:var(--accent)}
 
-  .dashboard-actions{
-    float:right;
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
+/* Status */
+.status-pill{display:inline-block;position:relative;font:800 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 12px 6px 22px;border:2px solid currentColor;white-space:nowrap}
+.status-pill::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.st-submitted{color:var(--st-submitted)}.st-review{color:var(--st-review)}.st-resolved{color:var(--st-resolved)}.st-dismissed{color:var(--st-dismissed)}
 
-  #modDashboard.maximized{
-    position:fixed;
-    inset:0;
-    z-index:9999;
-    width:100vw;
-    height:100vh;
-    max-width:none;
-    margin:0;
-    overflow-y:auto;
-    border-radius:0;
-  }
+/* Threads */
+.thread{margin-top:18px;display:flex;flex-direction:column;gap:10px;max-height:320px;overflow-y:auto;padding-right:4px}
+.thread h4{font-size:13px;margin:6px 0 0}
+.msg{padding:12px 14px;font-size:13px;line-height:1.5;border:2px solid var(--border);border-left:4px solid var(--accent)}
+.msg.mod{background:rgba(215,255,63,.04)}
+.msg small{display:block;color:var(--muted);margin-top:4px;font:11px var(--mono)}
+.muted{color:var(--muted);font-size:13px}
 
-  #modDashboard.maximized .panel-header{
-    padding-top:26px;
-  }
+/* Tracking */
+.track-head{position:relative;min-height:85px}
+.timeline{position:absolute;right:0;top:6px;display:flex;align-items:flex-start;gap:14px;transform:scale(.9);transform-origin:right top}
+.t-step{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:90px;color:var(--muted);font:800 11px var(--mono);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.t-dot{width:12px;height:12px;border-radius:50%;background:var(--surface-2);border:2px solid var(--border);transition:.2s}
+.t-line{width:55px;height:2px;background:var(--border);margin-top:6px}
+.t-step.done{color:var(--text)}.t-step.done .t-dot,.t-line.done{background:var(--st-resolved);border-color:var(--st-resolved)}
+.t-step.done .t-dot{box-shadow:0 0 8px rgba(107,255,176,.4)}
+.t-step.current{color:var(--text)}.t-step.current .t-dot{background:var(--st-review);border-color:var(--st-review);box-shadow:0 0 8px rgba(255,140,66,.5)}
+#terminalStatus{display:none;position:absolute;right:0;top:8px;padding:6px 12px;border:2px solid currentColor;font:800 11px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+#terminalStatus.resolved{color:var(--st-resolved)}#terminalStatus.dismissed{color:var(--st-dismissed)}
+.report-card{padding:16px;border:2px solid var(--border);background:rgba(255,255,255,.02);margin-bottom:14px;display:flex;justify-content:space-between;gap:16px}
+.report-card .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+#trackDetails{display:none;border-top:2px solid var(--border);margin-top:18px;padding-top:16px}
+#trackDetails .thread{margin-top:0}
 
-  #modDashboard.maximized #modList{
-    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  }
+/* Moderator dashboard */
+.dash-actions{float:right;display:flex;gap:10px}
+#modDashboard.max{position:fixed;inset:0;z-index:50;border-radius:0;overflow-y:auto;margin:0}
+.summary{display:flex;align-items:center;flex-wrap:wrap;gap:16px 36px;margin-top:18px;padding-bottom:20px;border-bottom:2px solid var(--border)}
+.stats{display:flex;flex-wrap:wrap;gap:16px 36px}
+.stat{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.stat strong{font:800 15px var(--mono);color:var(--accent)}
+.stat[data-s=SUBMITTED] strong{color:var(--st-submitted)}.stat[data-s=UNDER_REVIEW] strong{color:var(--st-review)}
+.stat[data-s=RESOLVED] strong{color:var(--st-resolved)}.stat[data-s=DISMISSED] strong{color:var(--st-dismissed)}
+.status-link{position:relative;border:0;padding:0 0 3px;color:var(--muted);font:800 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.status-link::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c,var(--accent));transform:scaleX(0);transform-origin:left;transition:transform .2s}
+.status-link:hover{color:var(--text)}
+.status-link.active{color:var(--c,var(--accent))}.status-link.active::after{transform:scaleX(1)}
+[data-s=SUBMITTED] .status-link{--c:var(--st-submitted)}[data-s=UNDER_REVIEW] .status-link{--c:var(--st-review)}
+[data-s=RESOLVED] .status-link{--c:var(--st-resolved)}[data-s=DISMISSED] .status-link{--c:var(--st-dismissed)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.filters select{width:auto;min-width:160px}
+#modList{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.report-row{border:2px solid var(--border);border-left:4px solid var(--c,var(--border));padding:16px;cursor:pointer;background:var(--surface);transition:.12s}
+.report-row:hover{border-color:var(--accent);transform:translate(-2px,-2px);box-shadow:4px 4px 0 rgba(215,255,63,.15)}
+.report-row .top,.detail-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.cat{font-weight:800;font-size:13px;text-transform:uppercase}
+.desc{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px}
+.empty{grid-column:1/-1;color:var(--muted);text-align:center;padding:30px 10px;font:12px var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.skeleton{height:74px;margin-bottom:12px;border:2px solid var(--border);background:linear-gradient(100deg,var(--surface) 30%,rgba(215,255,63,.06) 50%,var(--surface) 70%);background-size:200% 100%;animation:shimmer 1.3s infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+.sub-section{margin-top:22px;padding-top:18px;border-top:2px solid var(--border)}
 
-  .dashboard-summary{
-    width:100%;
-    min-height:32px;
-    display:flex;
-    align-items:center;
-    gap:32px;
-    margin-top:18px;
-    margin-bottom:24px;
-    padding-bottom:20px;
-    border-bottom:2px solid var(--border);
-  }
+/* Modal */
+#deleteModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.modal{width:min(420px,90%);background:#151515;border:2px solid var(--border);padding:24px}
+.modal h3{margin-bottom:10px;font:700 20px var(--display);text-transform:uppercase}
+.modal p{color:var(--muted);line-height:1.5;margin-bottom:20px}
 
-  #modCount{
-    display:flex;
-    align-items:center;
-    gap:7px;
-    white-space:nowrap;
-  }
+@media(max-width:800px){
+  .timeline,#terminalStatus{position:static;margin-top:14px;transform:none}
+  .track-head{min-height:0}
+  #terminalStatus{display:none;width:max-content}
+}
+@media(max-width:700px){
+  nav{padding:12px 18px 0}main{padding:0 16px 50px}.panel{padding:24px 20px}
+  .t-step{min-width:70px}.t-line{width:24px}.timeline{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-  #modCount span,
-  .stat-box span{
-    color:#f2f0e8 !important;
-    font-size:14px;
-    font-weight:600;
-    letter-spacing:.04em;
-  }
+/* ---- extras ---- */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(420px circle at var(--mx,50%) var(--my,25%),rgba(215,255,63,.05),transparent 60%)}
+@keyframes blink{50%{opacity:0}}
+.case-box{position:relative}
+.seal{position:absolute;right:22px;top:16px;padding:4px 12px;border:3px solid var(--accent);color:var(--accent);font:700 20px var(--display);letter-spacing:.12em;text-transform:uppercase;opacity:0;transform:rotate(-12deg)}
+.case-box.show .seal{animation:slam .5s cubic-bezier(.2,.9,.3,1.4) .3s forwards}
+@keyframes slam{from{opacity:0;transform:rotate(-12deg) scale(2.4)}to{opacity:.9;transform:rotate(-12deg) scale(1)}}
+.scan{display:flex;align-items:center;gap:12px;margin-top:10px;font:11.5px var(--mono);color:var(--muted)}
+.meter{flex:0 0 90px;height:6px;border:1px solid var(--border);background:var(--surface-2)}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.scan.warn{color:var(--st-review)}.scan.warn .meter i{background:var(--st-review)}
+.scan.ok #scanText::before{content:"✓ ";color:var(--st-resolved)}
+.scan.warn #scanText::before{content:"⚠ "}
+.report-row{animation:rise .35s both;animation-delay:calc(var(--i,0)*45ms)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+.panel{animation:panelIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes panelIn{from{opacity:0;transform:translateY(6px)}}
 
-  #modCount strong,
-  .stat-box strong{
-    color:var(--accent) !important;
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:15px;
-    font-weight:800;
-  }
-
-  .dashboard-stats{
-    display:flex;
-    align-items:center;
-    gap:32px;
-  }
-
-  .stat-box{
-    display:flex;
-    align-items:center;
-    gap:7px;
-    white-space:nowrap;
-  }
-
-  .clickable-stat{
-    cursor:pointer;
-    transition:opacity .15s ease, transform .15s ease;
-  }
-
-  .clickable-stat:hover{
-    opacity:.75;
-    transform:translateY(-1px);
-  }
-
-  .status-link{
-    position:relative;
-    background:none;
-    border:0;
-    padding:0 0 3px;
-    margin:0;
-    color:var(--muted);
-    font:inherit;
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:11.5px;
-    font-weight:800;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    cursor:pointer;
-  }
-  .status-link::after{
-    content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
-    transform:scaleX(0);transform-origin:left;transition:transform .2s cubic-bezier(.4,0,.2,1);
-  }
-
-  .status-link:hover{
-    color:var(--text);
-  }
-
-  .status-link.active{
-    color:var(--accent) !important;
-  }
-  .status-link.active::after{transform:scaleX(1)}
-
-  @media(max-width:800px){
-    .dashboard-summary{
-      flex-wrap:wrap;
-      gap:16px 24px;
-    }
-
-    .dashboard-stats{
-      flex-wrap:wrap;
-      gap:16px 24px;
-    }
-  }
-  .field{margin-bottom:22px}
-  label{display:block;margin-bottom:9px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  input,textarea,select{width:100%;border:2px solid var(--border);background:var(--surface-2);color:var(--text);
-    border-radius:2px;padding:14px 16px;outline:none;font:inherit;font-size:14.5px;line-height:1.5;transition:border-color .15s ease}
-  textarea{min-height:220px;resize:vertical}
-  #description{height:130px;min-height:110px;max-height:160px;overflow-y:auto;resize:none}
-  input::placeholder,textarea::placeholder{color:#5f5f56}
-  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:none}
-  select option{background:var(--surface-2);color:var(--text)}
-  .attach{border:2px dashed var(--border);border-radius:2px;padding:10px 12px;color:var(--muted);text-align:left;
-    background:transparent;font-size:13px}
-  .attach input{margin-top:8px}
-  .attach-row{display:flex;align-items:center;gap:12px;text-align:left;flex-wrap:wrap}
-  .attach-row #attachment{margin:0;flex:none}
-  .attach-row .attach-text{flex:1;min-width:180px}
-  .attach-row #attachmentName{flex-basis:100%;margin-top:2px}
-  #attachment{border:0;background:transparent;padding:0;
-    color:transparent;max-width:120px;display:block;margin-left:0;margin-right:auto;text-align:left}
-  #attachment:focus{border:0;box-shadow:none}
-  #attachment:focus-visible{outline:none}
-  #attachment::file-selector-button{
-    border:2px solid var(--border);
-    background:transparent;
-    color:var(--text);
-    padding:9px 13px;border-radius:2px;font:inherit;font-weight:700;text-transform:uppercase;font-size:12px;cursor:pointer}
-  #attachment::-webkit-file-upload-button{
-    border:2px solid var(--border);
-    background:transparent;
-    color:var(--text);
-    padding:9px 13px;border-radius:2px;font:inherit;font-weight:700;text-transform:uppercase;font-size:12px;cursor:pointer}
-
-  .primary{width:100%;border:2px solid var(--text);border-radius:2px;padding:15px;color:#0a0a08;font-weight:800;font-size:13.5px;
-    letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
-    background:var(--text);
-    box-shadow:5px 5px 0 var(--accent);
-    transition:transform .12s cubic-bezier(.4,0,.2,1),box-shadow .12s cubic-bezier(.4,0,.2,1),background .12s ease,color .12s ease;
-    font-family:inherit;
-    display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:visible}
-  .primary.inline{width:auto;padding:13px 22px}
-  .primary:hover:not(:disabled){background:var(--accent);border-color:var(--accent);transform:translate(2px,2px);box-shadow:3px 3px 0 var(--text)}
-  .primary:active:not(:disabled){transform:translate(5px,5px);box-shadow:0 0 0 transparent}
-  .primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-  .primary::after{display:none}
-
-  .secondary{border:2px solid var(--border);background:transparent;color:var(--text);padding:11px 16px;
-    border-radius:2px;cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
-    transition:background .15s ease,border-color .15s ease,color .15s ease}
-  .secondary:hover{border-color:var(--accent);color:var(--accent)}
-
-  .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(10,10,8,.25);border-top-color:#0a0a08;
-    animation:spin .7s linear infinite;flex:none}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  .layout-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;align-items:start}
-  .narrow{max-width:1100px;margin:26px auto 0;width:100%}
-
-  .message{display:none;margin-top:16px;padding:13px 14px;border-radius:2px;font-size:13px;line-height:1.5;
-    border:2px solid var(--border);
-    background:transparent;
-    color:var(--text);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px}
-  .message.error{display:block;background:rgba(255,68,56,.08);border-color:var(--danger);color:#ff9a92}
-  .message.success{display:block;background:rgba(107,255,176,.08);border-color:var(--success);color:#9dffcf}
-  .message.info{display:block;background:rgba(215,255,63,.06);border-color:var(--accent);color:var(--accent)}
-
-  .case-box{display:none;margin-top:20px;padding:22px;border:2px solid var(--accent);background:rgba(215,255,63,.05);
-    border-radius:2px}
-  .case-box small{color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-size:11px}
-  .case-code{margin:10px 0 14px;padding:14px;border-radius:2px;background:#050504;border:2px solid var(--border);
-    word-break:break-all;font-family:"JetBrains Mono",ui-monospace,monospace;color:var(--accent);font-size:14px;font-weight:700}
-  .copy-btn{border:2px solid var(--border);background:transparent;color:var(--text);padding:9px 13px;border-radius:2px;
-    cursor:pointer;font:inherit;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
-    transition:border-color .15s ease,color .15s ease}
-  .copy-btn:hover{border-color:var(--accent);color:var(--accent)}
-
-  .status-pill{display:inline-block;position:relative;font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px 6px 22px;border-radius:2px;
-    white-space:nowrap;background:transparent;border:2px solid currentColor}
-  .status-pill::before{
-    content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);
-    width:6px;height:6px;border-radius:50%;background:currentColor;
-  }
-  .status-submitted{color:var(--status-submitted)}
-  .status-review{color:var(--status-review)}
-  .status-resolved{color:var(--status-resolved)}
-  .status-dismissed{color:var(--status-dismissed)}
-
-  .moderator-note-label{
-    display:inline-block;
-    padding:6px 12px;
-    border:2px solid var(--success);
-    color:var(--success);
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
-
-  .thread{margin-top:18px;display:flex;flex-direction:column;gap:10px;max-height:280px;overflow-y:auto;padding-right:4px}
-  .msg{padding:12px 14px;border-radius:2px;font-size:13px;line-height:1.5;border:2px solid var(--border);border-left:4px solid var(--accent)}
-  .msg.mod{background:rgba(215,255,63,.04)}
-  .msg small{display:block;color:var(--muted);margin-top:4px;font-size:11px;font-family:"JetBrains Mono",ui-monospace,monospace}
-
-  #modList{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-  .report-row{position:relative;border:2px solid var(--border);border-left:4px solid var(--border);border-radius:2px;padding:16px;cursor:pointer;
-    background:var(--surface);transition:border-color .15s ease,transform .12s ease,box-shadow .12s ease}
-  .report-row:has(.status-review){border-left-color:var(--status-review)}
-  .report-row:has(.status-resolved){border-left-color:var(--status-resolved)}
-  .report-row:has(.status-dismissed){border-left-color:var(--status-dismissed)}
-  .report-row:has(.status-submitted){border-left-color:var(--status-submitted)}
-  .report-row:hover{border-color:var(--accent);transform:translate(-2px,-2px);box-shadow:4px 4px 0 rgba(215,255,63,.15)}
-  .report-row .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px}
-  .report-row .cat{font-weight:800;font-size:13px;letter-spacing:.02em;text-transform:uppercase}
-  .report-row .desc{color:var(--muted);font-size:13px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px}
-
-  .filters{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-  .filters select{width:auto;min-width:160px}
-  .empty{grid-column:1/-1;color:var(--muted);font-size:13px;text-align:center;padding:30px 10px;font-family:"JetBrains Mono",ui-monospace,monospace;text-transform:uppercase;letter-spacing:.04em}
-  .skeleton{height:74px;border-radius:2px;margin-bottom:12px;border:2px solid var(--border);
-    background:linear-gradient(100deg,var(--surface) 30%,rgba(215,255,63,.06) 50%,var(--surface) 70%);
-    background-size:200% 100%;animation:shimmer 1.3s infinite}
-  @keyframes shimmer{to{background-position:-200% 0}}
-
-  .back-link{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;margin-bottom:16px;
-    display:inline-flex;align-items:center;gap:6px;transition:color .15s ease,gap .15s ease}
-  .back-link:hover{color:var(--accent);gap:9px}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row .field{flex:1;min-width:160px}
-  .logout-link{float:right}
-
-  .track-timeline{
-    position:absolute;right:42px;top:30px;
-    display:flex;align-items:flex-start;justify-content:flex-end;gap:14px;margin:0;
-    transform:scale(.9);transform-origin:right top;
-  }
-  .timeline-step{
-    display:flex;flex-direction:column;align-items:center;gap:8px;min-width:90px;
-    color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-  }
-  .timeline-dot{width:12px;height:12px;border-radius:50%;background:var(--surface-2);border:2px solid var(--border);transition:.2s ease}
-  .timeline-line{width:55px;height:2px;background:var(--border);margin-top:6px;transition:.2s ease}
-  .timeline-step.completed{color:var(--text)}
-  .timeline-step.completed .timeline-dot{background:var(--status-resolved);border-color:var(--status-resolved);box-shadow:0 0 8px rgba(107,255,176,.4)}
-  .timeline-step.current{color:var(--text)}
-  #view-track .track-timeline .timeline-step.current .timeline-dot{
-    background:var(--status-review) !important;border-color:var(--status-review) !important;
-    box-shadow:0 0 8px rgba(255,140,66,.5) !important}
-  .timeline-line.completed{background:var(--status-resolved)}
-
-  #terminalTrackStatus{
-    display:none;
-    position:absolute;
-    right:42px;
-    top:32px;
-    padding:6px 12px;
-    border:2px solid currentColor;
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:11px;
-    font-weight:800;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    white-space:nowrap;
-  }
-
-  #terminalTrackStatus.resolved{
-    color:var(--status-resolved);
-  }
-
-  #terminalTrackStatus.dismissed{
-    color:var(--status-dismissed);
-  }
-
-  #view-track .panel-header{position:relative;min-height:85px}
-  #trackDesc{color:var(--muted);font-size:14px;line-height:1.6}
-  #viewReportBtn{margin-top:4px}
-  #trackDetails{border-top:2px solid var(--border);padding-top:16px}
-  #trackDetails .thread{margin-top:0}
-
-  @media (max-width:500px){
-    .timeline-line{max-width:36px}
-    .timeline-step span:last-child{font-size:11px}
-  }
-  @media (max-width:700px){
-    nav{padding:0 18px}.nav-links{gap:4px}
-    main{padding:0 16px 70px}.panel{padding:22px}
-    .trust-mini span{font-size:11.5px}
-  }
-
-  /* Buttons: global fallback so any bare <button> matches the new look */
-  button{
-    font-family:inherit;border-radius:2px;border:2px solid var(--border);
-    background:transparent;color:var(--text);cursor:pointer;
-    transition:background .15s ease,border-color .15s ease,color .15s ease,transform .12s ease;
-  }
-  button:hover{border-color:var(--accent);color:var(--accent)}
-  button:active{transform:translate(1px,1px)}
-  button:disabled{opacity:.4;cursor:not-allowed;transform:none}
-  button.primary,button.copy-btn,button.nav-btn{background:transparent}
-  button.primary{background:var(--text);color:#0a0a08}
-  button.primary:hover{background:var(--accent);color:#0a0a08}
-  button.nav-btn.active{color:var(--text);border-color:transparent}
-
-  input[type="file"]::file-selector-button{
-    margin-right:10px;padding:9px 13px;border-radius:2px;border:2px solid var(--border);
-    background:transparent;color:var(--text);font-family:inherit;font-weight:700;text-transform:uppercase;font-size:12px;cursor:pointer}
-  input[type="file"]::file-selector-button:hover{border-color:var(--accent);color:var(--accent)}
-  /* =========================================
-     THEMATIC UPGRADE: "classified document" motif
-     ========================================= */
-
-  /* Subtle paper-grain texture overlay across the whole page */
-  body::after{
-    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-  }
-
-  /* Bolder display font for the loudest headlines */
-  h1,.logo-line,.panel-header h2{font-family:"Space Grotesk",Inter,sans-serif}
-
-  /* CONFIDENTIAL watermark — page-level (not clipped by .hero) so it can
-     run at a real diagonal, sweeping up through the box like a stamp. */
-  .hero-watermark{
-    position:fixed;top:58%;left:38%;
-    transform:translate(-50%,-50%) rotate(-32deg);
-    transform-origin:center;
-    font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:clamp(60px,11vw,160px);
-    letter-spacing:.06em;color:transparent;-webkit-text-stroke:1.4px rgba(215,255,63,.11);
-    white-space:nowrap;pointer-events:none;user-select:none;z-index:1;
-  }
-  .hero-margin-note{
-    position:fixed;top:0;height:100vh;
-    display:none;flex-direction:column;justify-content:space-between;align-items:center;
-    padding:70px 0;
-    pointer-events:none;user-select:none;z-index:0;
-  }
-  .hero-margin-note span{
-    writing-mode:vertical-rl;
-    font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:700;
-    letter-spacing:.4em;text-transform:uppercase;color:rgba(242,240,232,.055);
-  }
-  .hero-margin-note.left{left:10px}
-  .hero-margin-note.left span{transform:rotate(180deg)}
-  .hero-margin-note.right{right:10px}
-  @media (min-width:1100px){.hero-margin-note{display:flex}}
-
-  /* Dashed "form tag" treatment for the eyebrow badge */
-  .eyebrow{border-style:dashed}
-
-  /* Ticket-stub case code: perforation + torn-edge feel */
-  .case-code{position:relative;font-weight:800;letter-spacing:.03em}
-  .case-code::before{
-    content:"✂";position:absolute;left:-2px;top:50%;transform:translateY(-50%) rotate(90deg);
-    font-size:11px;color:var(--muted);background:var(--bg);padding:0 2px;
-  }
-  .case-box{
-    background-image:repeating-linear-gradient(0deg,transparent,transparent 6px,rgba(215,255,63,.18) 6px,rgba(215,255,63,.18) 7px);
-    background-position:left top;background-size:2px 100%;background-repeat:no-repeat;
-    padding-left:26px;
-  }
-
-  /* Slight tactile lift on report cards */
-  .report-row:hover{transform:translate(-2px,-2px)}
-
-  /* Panel gets a faint dog-eared corner fold, like a physical document */
-  .panel{position:relative;animation:panelIn .35s cubic-bezier(.2,.8,.2,1)}
-  @keyframes panelIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .panel::before{
-    content:"";position:absolute;top:0;right:0;width:0;height:0;z-index:2;
-    border-style:solid;border-width:0 16px 16px 0;
-    border-color:transparent var(--bg) transparent transparent;
-    filter:drop-shadow(-1px 1px 2px rgba(0,0,0,.28));
-  }
-  .panel > *{position:relative;z-index:1}
-
-  /* Watermark thread: a faint line of text that runs edge-to-edge through the box, blending with the surface */
-  .doc-thread{
-    position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
-    display:flex;justify-content:space-between;align-items:center;
-    padding:0 2px;pointer-events:none;user-select:none;
-  }
-  .panel > .doc-thread{z-index:0}
-  .doc-thread span{
-    font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:700;
-    letter-spacing:.25em;text-transform:uppercase;white-space:nowrap;
-    color:rgba(242,240,232,.06);
-  }
-
-  /* Eyebrow tags read a touch more like a stamped form field */
-  .eyebrow{letter-spacing:.12em}
-  .dot{animation:dotPulse 2.4s ease-in-out infinite}
-  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-  /* Full-bleed diagonal watermark thread — runs edge-to-edge at 45deg, sits
-     behind the panel (which is opaque) so it's only ever visible in the
-     space around the box, never over its content; blends into the bg. */
-  .diag-thread{
-    position:fixed;top:50%;left:50%;
-    transform:translate(-50%,-50%) rotate(-18deg);
-    transform-origin:center;
-    width:250vmax;
-    display:flex;justify-content:center;align-items:center;
-    pointer-events:none;user-select:none;
-    z-index:1;
-  }
-  .diag-thread span{
-    font-family:"JetBrains Mono",ui-monospace,monospace;
-    font-size:16px;font-weight:800;letter-spacing:.5em;text-transform:uppercase;
-    color:rgba(242,240,232,.19);white-space:nowrap;
-  }
-  .diag-thread .stamp{
-    font-family:"Space Grotesk",sans-serif;
-    font-size:clamp(48px,9vw,120px);font-weight:700;letter-spacing:.08em;
-    color:transparent;-webkit-text-stroke:1.6px rgba(215,255,63,.18);
-    margin:0 .6em;
-  }
-
-  /* Scattered corner/margin watermarks — fill the otherwise-empty space
-     around the box at varied sizes, weights and angles so nothing reads
-     as a single repeated element. Same faint-stroke language throughout,
-     hidden behind the opaque panel wherever they'd overlap it. */
-  .corner-mark{
-    position:fixed;pointer-events:none;user-select:none;z-index:1;
-    font-family:"Space Grotesk",sans-serif;font-weight:700;
-    color:transparent;white-space:nowrap;letter-spacing:.05em;
-    text-transform:uppercase;
-  }
-
-  /* =========================================
-     POLISH PASS: distinct status colors + cleanup
-     ========================================= */
-  :root{
-    /* Each report state now gets its own hue, so a glance at a card or the
-       stat bar tells you what it is without reading the label. */
-    --status-submitted:#69c5ff;   /* incoming / new — cool blue */
-    --status-review:#ff8c42;      /* actively being worked — warm orange */
-    --status-resolved:#6bffb0;    /* done — green (unchanged) */
-    --status-dismissed:#ff4438;   /* closed, no action — red (unchanged) */
-  }
-
-  .status-pill::before{box-shadow:0 0 6px currentColor}
-
-  .stat-box strong{transition:color .15s ease}
-  .stat-box:nth-of-type(1) strong{color:var(--status-submitted) !important}
-  .stat-box:nth-of-type(2) strong{color:var(--status-review) !important}
-  .stat-box:nth-of-type(3) strong{color:var(--status-resolved) !important}
-  .stat-box:nth-of-type(4) strong{color:var(--status-dismissed) !important}
-  .status-link[data-status="SUBMITTED"].active{color:var(--status-submitted) !important}
-  .status-link[data-status="SUBMITTED"]::after{background:var(--status-submitted)}
-  .status-link[data-status="UNDER_REVIEW"].active{color:var(--status-review) !important}
-  .status-link[data-status="UNDER_REVIEW"]::after{background:var(--status-review)}
-  .status-link[data-status="RESOLVED"].active{color:var(--status-resolved) !important}
-  .status-link[data-status="RESOLVED"]::after{background:var(--status-resolved)}
-  .status-link[data-status="DISMISSED"].active{color:var(--status-dismissed) !important}
-  .status-link[data-status="DISMISSED"]::after{background:var(--status-dismissed)}
-
-  /* Consistent, calmer panel shadow + hover lift across primary buttons */
-  .panel{box-shadow:6px 6px 0 rgba(215,255,63,.06)}
-  input:hover,textarea:hover,select:hover{border-color:rgba(242,240,232,.28)}
-
-  /* Dashboard summary numbers get a touch more breathing room + a subtle card feel */
-  .dashboard-summary{gap:36px}
-  .stat-box,#modCount{
-    padding:6px 0;
-  }
-
-  /* Sharper section dividers between filters and list */
-  .filters{padding-bottom:16px;border-bottom:1px solid var(--border)}
-
-  /* Track view: terminal status pill matches the new palette + reads calmer */
-  #terminalTrackStatus{border-radius:2px;background:rgba(242,240,232,.03)}
 </style>
 </head>
-
 <body>
 
-<div class="particle" style="width:5px;height:5px;top:18%;left:8%;opacity:.3;animation-delay:0s"></div>
-<div class="particle" style="width:3px;height:3px;top:32%;left:88%;opacity:.25;animation-delay:2s"></div>
-<div class="particle" style="width:4px;height:4px;top:60%;left:14%;opacity:.2;animation-delay:4s"></div>
-<div class="particle" style="width:3px;height:3px;top:72%;left:80%;opacity:.28;animation-delay:1.2s"></div>
-<div class="particle" style="width:5px;height:5px;top:8%;left:60%;opacity:.18;animation-delay:3.4s"></div>
-
-<div class="hero-margin-note left" aria-hidden="true">
-  <span>ENCRYPTED</span>
-  <span>ANONYMOUS</span>
-  <span>SYSTEM</span>
+<div class="wm side l" aria-hidden="true"><span>ENCRYPTED</span><span>ANONYMOUS</span><span>SYSTEM</span></div>
+<div class="wm side r" aria-hidden="true"><span>NO IDENTITY</span><span>LOGGED</span><span>CASE-CODE ONLY</span></div>
+<div class="wm diag" aria-hidden="true">
+  <span>WHISTLEDROP &nbsp;·&nbsp; ANONYMOUS &nbsp;·&nbsp; ENCRYPTED &nbsp;·&nbsp;</span><span class="stamp">CONFIDENTIAL</span><span>&nbsp;·&nbsp; NO NAMES LOGGED &nbsp;·&nbsp; WHISTLEDROP &nbsp;·&nbsp; ANONYMOUS &nbsp;·&nbsp; ENCRYPTED &nbsp;·&nbsp;</span>
 </div>
-<div class="hero-margin-note right" aria-hidden="true">
-  <span>NO IDENTITY</span>
-  <span>LOGGED</span>
-  <span>CASE-CODE ONLY</span>
-</div>
-
-<div class="diag-thread" aria-hidden="true">
-  <span>WHISTLEDROP &nbsp;&#183;&nbsp; ANONYMOUS &nbsp;&#183;&nbsp; ENCRYPTED &nbsp;&#183;&nbsp;</span><span class="stamp">CONFIDENTIAL</span><span>&nbsp;&#183;&nbsp; NO NAMES LOGGED &nbsp;&#183;&nbsp; WHISTLEDROP &nbsp;&#183;&nbsp; ANONYMOUS &nbsp;&#183;&nbsp; ENCRYPTED &nbsp;&#183;&nbsp; NO NAMES LOGGED &nbsp;&#183;&nbsp;</span>
-</div>
-
-<div class="corner-mark" aria-hidden="true" style="top:100px;left:-30px;font-size:96px;transform:rotate(-11deg);-webkit-text-stroke:1.3px rgba(215,255,63,.13)">REDACTED</div>
-<div class="corner-mark" aria-hidden="true" style="top:120px;right:-40px;font-size:52px;transform:rotate(14deg);-webkit-text-stroke:1px rgba(242,240,232,.09)">EYES ONLY</div>
-<div class="corner-mark" aria-hidden="true" style="bottom:40px;left:-50px;font-size:128px;transform:rotate(9deg);-webkit-text-stroke:1.4px rgba(242,240,232,.08)">CASE FILE</div>
-<div class="corner-mark" aria-hidden="true" style="bottom:0;right:-70px;font-size:150px;transform:rotate(-13deg);-webkit-text-stroke:1.5px rgba(215,255,63,.11)">CLASSIFIED</div>
-<div class="corner-mark" aria-hidden="true" style="top:44%;left:1%;font-size:44px;transform:rotate(-22deg);-webkit-text-stroke:1px rgba(242,240,232,.08)">VERIFIED</div>
-<div class="corner-mark" aria-hidden="true" style="top:62%;right:1.5%;font-size:64px;transform:rotate(19deg);-webkit-text-stroke:1.1px rgba(215,255,63,.10)">SECURE</div>
-<div class="corner-mark" aria-hidden="true" style="top:8%;left:22%;font-size:34px;transform:rotate(-6deg);-webkit-text-stroke:1px rgba(242,240,232,.08)">NO TRACE</div>
-<div class="corner-mark" aria-hidden="true" style="top:30%;right:20%;font-size:40px;transform:rotate(-9deg);-webkit-text-stroke:1px rgba(215,255,63,.10)">PROTECTED</div>
-<div class="corner-mark" aria-hidden="true" style="top:230px;left:5%;font-size:30px;transform:rotate(16deg);-webkit-text-stroke:1px rgba(242,240,232,.08)">SEALED</div>
-<div class="corner-mark" aria-hidden="true" style="bottom:16%;right:6%;font-size:38px;transform:rotate(-15deg);-webkit-text-stroke:1px rgba(242,240,232,.08)">WITNESS</div>
-<div class="corner-mark" aria-hidden="true" style="bottom:8%;left:14%;font-size:46px;transform:rotate(11deg);-webkit-text-stroke:1.1px rgba(215,255,63,.10)">TIP LINE</div>
-<div class="corner-mark" aria-hidden="true" style="top:75%;left:-40px;font-size:104px;transform:rotate(-8deg);-webkit-text-stroke:1.3px rgba(242,240,232,.07)">RESTRICTED</div>
-<div class="corner-mark" aria-hidden="true" style="top:2%;right:8%;font-size:26px;transform:rotate(7deg);-webkit-text-stroke:1px rgba(242,240,232,.10)">DO NOT SHARE</div>
-<div class="corner-mark" aria-hidden="true" style="bottom:-20px;left:38%;font-size:70px;transform:rotate(4deg);-webkit-text-stroke:1.2px rgba(215,255,63,.08)">OFF THE RECORD</div>
-<div class="corner-mark" aria-hidden="true" style="top:50%;right:-60px;font-size:118px;transform:rotate(-17deg);-webkit-text-stroke:1.3px rgba(242,240,232,.07)">SAFE HARBOR</div>
-<div class="corner-mark" aria-hidden="true" style="top:18%;left:-20px;font-size:36px;transform:rotate(21deg);-webkit-text-stroke:1px rgba(215,255,63,.09)">SOURCE PROTECTED</div>
+<div class="wm mark a" aria-hidden="true" style="--t:100px;--l:-30px;--s:96px;--r:-11deg">REDACTED</div>
+<div class="wm mark a" aria-hidden="true" style="--b:0;--rt:-70px;--s:150px;--r:-13deg">CLASSIFIED</div>
+<div class="wm mark" aria-hidden="true" style="--t:84px;--rt:-30px;--s:48px;--r:14deg">EYES ONLY</div>
+<div class="wm mark a" aria-hidden="true" style="--t:42%;--l:-24px;--s:60px;--r:-9deg">CASE FILE</div>
+<div class="wm mark" aria-hidden="true" style="--t:36%;--rt:-34px;--s:64px;--r:12deg">SECURE</div>
+<div class="wm mark a" aria-hidden="true" style="--t:66%;--rt:-20px;--s:52px;--r:-16deg">PROTECTED</div>
+<div class="wm mark" aria-hidden="true" style="--t:72%;--l:-10px;--s:56px;--r:8deg">WITNESS</div>
+<div class="wm mark a" aria-hidden="true" style="--b:24px;--l:6%;--s:70px;--r:-6deg">SEALED</div>
+<div class="wm mark" aria-hidden="true" style="--b:6px;--l:42%;--s:38px;--r:3deg">OFF THE RECORD</div>
+<div class="wm mark" aria-hidden="true" style="--t:150px;--l:34%;--s:30px;--r:-5deg">NO TRACE</div>
 
 <nav>
-  <div class="logo"><div class="logo-line"><span class="w-thin">Whistle</span><span class="w-bold">Drop</span></div><div class="eyebrow"><span class="dot"></span>Anonymous reporting system</div></div>
+  <div>
+    <div class="logo-line">Whistle<b>Drop</b></div>
+    <div class="eyebrow"><span class="dot"></span>Anonymous reporting system</div>
+  </div>
   <div class="nav-links">
     <button class="nav-btn" id="navSubmit" onclick="showView('submit')">Submit</button>
     <button class="nav-btn" id="navTrack" onclick="showView('track')">Track Report</button>
@@ -656,427 +253,157 @@
 </nav>
 
 <main>
-
   <section class="hero">
-    <svg class="bg-glyph" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M200 20 L340 80 V190 C340 280 280 350 200 380 C120 350 60 280 60 190 V80 Z" fill="none" stroke="#69c5ff" stroke-width="6"/>
-      <path d="M140 190 L185 235 L265 145" fill="none" stroke="#69c5ff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <svg class="curve-lines" viewBox="0 0 900 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M40 20 C 260 20, 320 180, 450 220" fill="none" stroke="#55aef5" stroke-width="1.5"/>
-      <path d="M860 30 C 640 30, 580 180, 450 220" fill="none" stroke="#69c5ff" stroke-width="1.5"/>
-    </svg>
-
     <h1>Speak up.<br><span>Stay anonymous.</span></h1>
     <p id="heroSubtitle">Submit concerns securely without creating an account. Keep your case code and check on your report privately, any time.</p>
   </section>
 
-  <!-- SUBMIT VIEW -->
-  <section id="view-submit" class="view active">
-    <div class="narrow">
-      <div class="panel">
-        <div class="doc-thread" aria-hidden="true"><span>Confidential</span><span>Anonymous</span><span>Encrypted</span><span>Secure</span></div>
-        <div class="panel-header">
-          <span class="eyebrow-label">Report a concern</span>
-          <h2>Submit a report</h2>
-          <p>No account or personal information is required.</p>
-        </div>
-
-        <form id="reportForm" novalidate>
-          <div class="field">
-            <label for="category">Category</label>
-            <select id="category" required>
-              <option value="">Select a category</option>
-              <option>Security</option>
-              <option>Harassment</option>
-              <option>Corruption</option>
-              <option>Technical</option>
-              <option>Other</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="description">What's happening?</label>
-            <textarea id="description" placeholder="Describe the situation clearly. Avoid including names or details that could identify you." required></textarea>
-          </div>
-
-          <div class="field">
-            <label for="evidence">Attachment link (optional)</label>
-            <input type="url" id="evidence" placeholder="https://...">
-          </div>
-
-          <div class="field">
-            <label for="attachment">Attachment (optional)</label>
-            <div class="attach attach-row">
-              <input type="file" id="attachment" name="attachment">
-              <span class="attach-text">Attach a photo, document, or file as supporting evidence (max 10 MB).</span>
-              <div id="attachmentName" class="hint" style="display:none"></div>
-            </div>
-          </div>
-
-          <button class="primary" id="submitBtn" type="submit">
-            <span class="btn-label">Submit report</span>
-          </button>
-        </form>
-
-        <div id="submitMessage" class="message" role="status"></div>
-
-        <div id="caseBox" class="case-box">
-          <div class="case-code" id="caseCode"></div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button
-              class="copy-btn"
-              id="copyBtn"
-              onclick="copyCaseCode()"
-            >
-              Copy case code
-            </button>
-
-            <button
-              class="copy-btn"
-              type="button"
-              onclick="startAnotherReport()"
-            >
-              Submit another report
-            </button>
-          </div>
-        </div>
-      </div>
+  <!-- SUBMIT -->
+  <section id="view-submit" class="view active"><div class="narrow"><div class="panel">
+    <div class="doc-thread" aria-hidden="true"><span>Confidential</span><span>Anonymous</span><span>Encrypted</span><span>Secure</span></div>
+    <div class="panel-header">
+      <span class="eyebrow-label">Report a concern</span>
+      <h2>Submit a report</h2>
+      <p>No account or personal information is required.</p>
     </div>
-  </section>
-
-  <!-- TRACK VIEW -->
-  <section id="view-track" class="view">
-    <div class="narrow">
-      <div class="panel">
-        <div class="doc-thread" aria-hidden="true"><span>Case-File</span><span>No Names</span><span>Encrypted</span><span>Verified</span></div>
-        <div class="panel-header">
-          <span class="eyebrow-label">Case lookup</span>
-          <h2>Track your report</h2>
-
-          <div id="terminalTrackStatus"></div>
-
-          <div class="track-timeline">
-
-  <div class="timeline-step" id="timelineSubmitted">
-    <div class="timeline-dot"></div>
-    <span>Submitted</span>
-  </div>
-
-  <div class="timeline-line"></div>
-
-  <div class="timeline-step" id="timelineReview">
-    <div class="timeline-dot"></div>
-    <span>Under Review</span>
-  </div>
-
-  <div class="timeline-line"></div>
-
-  <div class="timeline-step" id="timelineResolved">
-    <div class="timeline-dot"></div>
-    <span>Resolved</span>
-  </div>
-
-</div>
-        </div>
-
-        <div class="row">
-          <div class="field">
-            <label for="trackCode">Case code</label>
-            <div style="position:relative">
-              <input type="password" id="trackCode" placeholder="Paste your case code" style="padding-right:52px">
-              <button type="button" id="trackCodeToggle" onclick="toggleTrackCodeVisibility()" aria-label="Show case code"
-                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);
-                  cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center">
-                <svg id="trackCodeEyeIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <button class="primary inline" id="trackBtn" onclick="lookupCase()">
-          <span class="btn-label">Find report</span>
-        </button>
-
-        <div id="trackMessage" class="message" role="status"></div>
-        <div id="trackResult" style="display:none;margin-top:22px">
-
-  <div class="top"
-       style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:10px">
-
-    <span id="trackStatus" class="status-pill"></span>
-
-  </div>
-
-  <div id="trackLatestNote"
-       style="color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:14px">
-  </div>
-
-  <button
-    class="secondary"
-    id="viewReportBtn"
-    type="button"
-    onclick="toggleTrackDetails()">
-    View report
-  </button>
-
-  <!-- FULL REPORT DETAILS -->
-  <div id="trackDetails"
-       style="display:none;margin-top:18px">
-
-    <div style="
-      padding:16px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:rgba(255,255,255,.02);
-      margin-bottom:14px;
-    ">
-
-      <div
-        style="
-          display:flex;
-          justify-content:space-between;
-          align-items:flex-start;
-        "
-      >
-        <div>
-          <div
-            style="
-              font-size:11px;
-              font-weight:700;
-              text-transform:uppercase;
-              letter-spacing:.08em;
-              margin-bottom:7px;
-            "
-          >
-            Report description
-          </div>
-
-          <div
-            id="trackDescription"
-            style="font-size:14px;line-height:1.6"
-          ></div>
-        </div>
-
-        <div
-          id="trackCategory"
-          style="
-            font-size:14px;
-            line-height:1.6;
-            font-weight:600;
-            text-align:right;
-          "
-        ></div>
-      </div>
-
-    </div>
-
-    <div id="trackThread" class="thread"></div>
-
-    <div id="reporterReplyBox" style="margin-top:18px;">
-      <div class="eyebrow-label">Reply to moderator</div>
-
-      <textarea
-        id="reporterReply"
-        placeholder="Write a reply to the moderator..."
-        style="margin-top:10px;min-height:90px;height:90px;"
-      ></textarea>
-
-      <button
-        type="button"
-        class="primary"
-        id="reporterReplyBtn"
-        onclick="sendReporterReply()"
-        style="margin-top:10px;"
-      >
-        Send reply
-      </button>
-
-      <div id="reporterReplyMessage" class="message"></div>
-    </div>
-
-  </div>
-
-</div>
-
-      <div
-        id="reporterEvidenceBox"
-        style="display:none;margin-top:18px;"
-      >
-        <div class="panel" style="padding:18px;">
-
-          <div class="eyebrow-label">
-            Additional evidence requested
-          </div>
-
-          <p
-            id="evidenceRequestText"
-            style="margin-top:8px;color:var(--text);line-height:1.6;"
-          ></p>
-
-          <input
-            type="file"
-            id="reporterEvidenceInput"
-            accept="image/*,.pdf,.doc,.docx"
-            style="margin-top:12px;"
-          >
-
-          <div
-            id="reporterEvidenceName"
-            class="hint"
-            style="margin-top:8px;"
-          ></div>
-
-          <button
-            type="button"
-            id="reporterEvidenceBtn"
-            class="primary"
-            onclick="uploadReporterEvidence()"
-            style="margin-top:12px;"
-          >
-            Upload evidence
-          </button>
-
-          <div
-            id="reporterEvidenceMessage"
-            class="message"
-            style="margin-top:10px;"
-          ></div>
-
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- MODERATOR VIEW -->
-  <section id="view-moderator" class="view">
-    <div class="narrow">
-    <div class="panel" id="modGate">
-      <div class="panel-header">
-        <h2>Moderator sign-in</h2>
-        <p>Enter your moderator key to review and manage reports.</p>
+    <form id="reportForm" novalidate>
+      <div class="field">
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="">Select a category</option>
+          <option>Security</option><option>Harassment</option><option>Corruption</option><option>Technical</option><option>Other</option>
+        </select>
       </div>
       <div class="field">
-        <label for="modPass">Moderator key</label>
-        <div style="position:relative">
-          <input type="password" id="modPass" placeholder="Enter your moderator key" style="padding-right:70px">
-          <button type="button" id="modPassToggle" onclick="toggleModPassVisibility()" aria-label="Show moderator key"
-            style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:0;color:var(--muted);
-              cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:center">
-            <svg id="modPassEyeIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
+        <label for="description">What's happening?</label>
+        <textarea id="description" placeholder="Describe the situation clearly. Avoid including names or details that could identify you." required></textarea>
+        <div class="scan" id="scan"><div class="meter"><i id="meterFill"></i></div><span id="scanText">Anonymity check: start typing</span></div>
+      </div>
+      <div class="field">
+        <label for="evidence">Attachment link (optional)</label>
+        <input type="url" id="evidence" placeholder="https://...">
+      </div>
+      <div class="field">
+        <label for="attachment">Attachment (optional)</label>
+        <div class="attach">
+          <input type="file" id="attachment" name="attachment">
+          <span>Attach a photo, document, or file as supporting evidence (max 10 MB).</span>
+          <div id="attachmentName" class="hint" style="display:none"></div>
         </div>
       </div>
-      <button class="primary" id="modLoginBtn" onclick="modLogin()">
-        <span class="btn-label">Sign in</span>
-      </button>
+      <button class="primary" id="submitBtn" type="submit"><span class="btn-label">Submit report</span></button>
+    </form>
+    <div id="submitMessage" class="message" role="status"></div>
+    <div id="caseBox" class="case-box">
+      <div class="seal" aria-hidden="true">Received</div>
+      <p>Save this code — it's the only way to check your report.</p>
+      <div class="case-code" id="caseCode"></div>
+      <div class="row">
+        <button class="copy-btn" id="copyBtn" type="button" onclick="copyCaseCode()">Copy case code</button>
+        <button class="copy-btn" type="button" onclick="saveCaseCode()">Save as .txt</button>
+        <button class="copy-btn" type="button" onclick="startAnotherReport()">Submit another report</button>
+      </div>
+    </div>
+  </div></div></section>
+
+  <!-- TRACK -->
+  <section id="view-track" class="view"><div class="narrow"><div class="panel">
+    <div class="doc-thread" aria-hidden="true"><span>Case-File</span><span>No Names</span><span>Encrypted</span><span>Verified</span></div>
+    <div class="panel-header track-head">
+      <span class="eyebrow-label">Case lookup</span>
+      <h2>Track your report</h2>
+      <div id="terminalStatus"></div>
+      <div class="timeline" id="timeline">
+        <div class="t-step" id="tSubmitted"><div class="t-dot"></div><span>Submitted</span></div>
+        <div class="t-line"></div>
+        <div class="t-step" id="tReview"><div class="t-dot"></div><span>Under Review</span></div>
+        <div class="t-line"></div>
+        <div class="t-step" id="tResolved"><div class="t-dot"></div><span>Resolved</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="trackCode">Case code</label>
+      <div class="pw">
+        <input type="password" id="trackCode" placeholder="Paste your case code" autocomplete="off">
+        <button type="button" onclick="toggleVisibility('trackCode',this,'case code')" aria-label="Show case code"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
+      </div>
+    </div>
+    <button class="primary inline" id="trackBtn" onclick="lookupCase()"><span class="btn-label">Find report</span></button>
+    <div id="trackMessage" class="message" role="status"></div>
+
+    <div id="trackResult" style="display:none;margin-top:22px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><span id="trackStatus" class="status-pill"></span></div>
+      <div id="trackLatestNote" class="muted" style="font-size:14px;line-height:1.6;margin-bottom:14px"></div>
+      <button class="secondary" id="viewReportBtn" type="button" onclick="toggleTrackDetails()">View report</button>
+
+      <div id="trackDetails">
+        <div class="report-card">
+          <div><div class="lbl">Report description</div><div id="trackDescription" style="font-size:14px;line-height:1.6"></div></div>
+          <div id="trackCategory" style="font-weight:600;text-align:right"></div>
+        </div>
+        <div id="trackThread" class="thread"></div>
+        <div style="margin-top:18px">
+          <div class="eyebrow-label">Reply to moderator</div>
+          <textarea id="reporterReply" placeholder="Write a reply to the moderator..." style="min-height:90px"></textarea>
+          <button type="button" class="primary" id="reporterReplyBtn" onclick="sendReporterReply()" style="margin-top:10px">Send reply</button>
+          <div id="reporterReplyMessage" class="message"></div>
+        </div>
+      </div>
+
+      <div id="reporterEvidenceBox" class="sub-section" style="display:none">
+        <div class="eyebrow-label">Additional evidence requested</div>
+        <p id="evidenceRequestText" style="margin:8px 0 12px;line-height:1.6"></p>
+        <input type="file" id="reporterEvidenceInput" accept="image/*,.pdf,.doc,.docx">
+        <button type="button" id="reporterEvidenceBtn" class="primary" onclick="uploadReporterEvidence()" style="margin-top:12px">Upload evidence</button>
+        <div id="reporterEvidenceMessage" class="message"></div>
+      </div>
+    </div>
+  </div></div></section>
+
+  <!-- MODERATOR -->
+  <section id="view-moderator" class="view"><div class="narrow">
+    <div class="panel" id="modGate">
+      <div class="panel-header"><h2>Moderator sign-in</h2><p>Enter your moderator key to review and manage reports.</p></div>
+      <div class="field">
+        <label for="modPass">Moderator key</label>
+        <div class="pw">
+          <input type="password" id="modPass" placeholder="Enter your moderator key" autocomplete="off">
+          <button type="button" onclick="toggleVisibility('modPass',this,'moderator key')" aria-label="Show moderator key"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
+        </div>
+      </div>
+      <button class="primary" id="modLoginBtn" onclick="modLogin()"><span class="btn-label">Sign in</span></button>
       <div id="modMessage" class="message"></div>
     </div>
 
     <div class="panel" id="modDashboard" style="display:none">
       <div class="panel-header">
-        <h2>
-          Reports dashboard
-          <span class="dashboard-actions">
-            <button
-              type="button"
-              class="secondary"
-              id="maximizeModBtn"
-              onclick="toggleModeratorMaximize()"
-            >
-              MAXIMIZE
-            </button>
-
-            <button
-              type="button"
-              class="secondary"
-              onclick="modLogout()"
-            >
-              SIGN OUT
-            </button>
+        <h2>Reports dashboard
+          <span class="dash-actions">
+            <button type="button" class="secondary" id="maximizeModBtn" onclick="toggleMaximize()">Maximize</button>
+            <button type="button" class="secondary" onclick="modLogout()">Sign out</button>
           </span>
         </h2>
-        <div class="dashboard-summary">
-          <div id="modCount">
-            <button type="button" class="status-link reports-link active"
-              onclick="showAllReports()">
-              ACTIVE REPORTS
-            </button>
-            <strong id="statTotal">0</strong>
-          </div>
-
-          <div class="dashboard-stats">
-            <div class="stat-box">
-              <button type="button" class="status-link" data-status="SUBMITTED"
-                onclick="filterByStatus('SUBMITTED')">
-                SUBMITTED
-              </button>
-              <strong id="statSubmitted">0</strong>
-            </div>
-
-            <div class="stat-box">
-              <button type="button" class="status-link" data-status="UNDER_REVIEW"
-                onclick="filterByStatus('UNDER_REVIEW')">
-                UNDER REVIEW
-              </button>
-              <strong id="statUnderReview">0</strong>
-            </div>
-
-            <div class="stat-box">
-              <button type="button"
-                      class="status-link"
-                      data-status="RESOLVED"
-                      onclick="filterByStatus('RESOLVED')">
-                RESOLVED
-              </button>
-              <strong id="statResolved">0</strong>
-            </div>
-
-            <div class="stat-box">
-              <button type="button"
-                      class="status-link"
-                      data-status="DISMISSED"
-                      onclick="filterByStatus('DISMISSED')">
-                DISMISSED
-              </button>
-              <strong id="statDismissed">0</strong>
-            </div>
+        <div class="summary">
+          <div class="stat"><button type="button" class="status-link active" id="linkActive" onclick="setStatusFilter('ACTIVE')">Active reports</button><strong id="statTotal">0</strong></div>
+          <div class="stats">
+            <div class="stat" data-s="SUBMITTED"><button type="button" class="status-link" onclick="setStatusFilter('SUBMITTED')">Submitted</button><strong id="statSubmitted">0</strong></div>
+            <div class="stat" data-s="UNDER_REVIEW"><button type="button" class="status-link" onclick="setStatusFilter('UNDER_REVIEW')">Under review</button><strong id="statUnderReview">0</strong></div>
+            <div class="stat" data-s="RESOLVED"><button type="button" class="status-link" onclick="setStatusFilter('RESOLVED')">Resolved</button><strong id="statResolved">0</strong></div>
+            <div class="stat" data-s="DISMISSED"><button type="button" class="status-link" onclick="setStatusFilter('DISMISSED')">Dismissed</button><strong id="statDismissed">0</strong></div>
           </div>
         </div>
       </div>
       <div class="filters">
-        <select id="filterStatus" onchange="reloadModList()">
-          <option value="ACTIVE">Active reports</option>
-          <option value="SUBMITTED">Submitted</option>
-          <option value="UNDER_REVIEW">Under review</option>
-          <option value="RESOLVED">Resolved</option>
-          <option value="DISMISSED">Dismissed</option>
+        <select id="filterStatus" aria-label="Filter by status" onchange="applyFilters()">
+          <option value="ACTIVE">Active reports</option><option value="SUBMITTED">Submitted</option>
+          <option value="UNDER_REVIEW">Under review</option><option value="RESOLVED">Resolved</option><option value="DISMISSED">Dismissed</option>
         </select>
-        <select id="filterCategory" onchange="reloadModList()">
-          <option value="">All categories</option>
-          <option value="Security">Security</option>
-          <option value="Harassment">Harassment</option>
-          <option value="Corruption">Corruption</option>
-          <option value="Technical">Technical</option>
-          <option value="Other">Other</option>
+        <select id="filterCategory" aria-label="Filter by category" onchange="applyFilters()">
+          <option value="">All categories</option><option>Security</option><option>Harassment</option><option>Corruption</option><option>Technical</option><option>Other</option>
         </select>
-        <select id="sortReports" onchange="sortModReports()">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="type">By type</option>
+        <select id="sortReports" aria-label="Sort reports" onchange="applyFilters()">
+          <option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="type">By type</option>
         </select>
       </div>
       <div id="modList"></div>
@@ -1084,1781 +411,711 @@
 
     <div class="panel" id="modDetail" style="display:none">
       <button class="back-link" onclick="closeModDetail()">← Back to dashboard</button>
-      <div class="top" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <strong id="modCategory"></strong>
-        <span id="modStatus" class="status-pill"></span>
-      </div>
-      <p id="modCode" style="color:var(--muted);font-size:12px;font-family:ui-monospace,monospace;margin-bottom:12px"></p>
+      <div class="detail-top"><strong id="modCategory"></strong><span id="modStatus" class="status-pill"></span></div>
+      <p id="modCode" class="muted" style="font-family:var(--mono);font-size:12px;margin-bottom:12px"></p>
       <p id="modDesc" style="font-size:14px;line-height:1.6;margin-bottom:6px"></p>
       <div id="modThread" class="thread"></div>
 
       <div class="field" style="margin-top:16px">
         <label for="modStatusSelect">Update status</label>
         <select id="modStatusSelect">
-          <option value="SUBMITTED">Submitted</option>
-          <option value="UNDER_REVIEW">Under review</option>
-          <option value="RESOLVED">Resolved</option>
-          <option value="DISMISSED">Dismissed</option>
+          <option value="SUBMITTED">Submitted</option><option value="UNDER_REVIEW">Under review</option>
+          <option value="RESOLVED">Resolved</option><option value="DISMISSED">Dismissed</option>
         </select>
       </div>
       <div class="field">
         <label for="modReply">Status note (optional)</label>
         <textarea id="modReply" placeholder="Add a short note about this update..." style="min-height:80px"></textarea>
       </div>
-      <button class="primary" id="modSaveBtn" onclick="modSave()">
-        <span class="btn-label">Save update</span>
-      </button>
+      <button class="primary" id="modSaveBtn" onclick="modSave()"><span class="btn-label">Save update</span></button>
+      <button type="button" id="clearReportBtn" class="secondary danger" onclick="openDeleteConfirm()" style="display:none;margin-top:12px">Clear report</button>
 
-      <button
-        type="button"
-        id="clearReportBtn"
-        class="secondary"
-        onclick="confirmDeleteReport()"
-        style="display:none;margin-top:10px;color:#ff6b6b;border-color:#ff6b6b;"
-      >
-        Clear report
-      </button>
-
-      <div style="margin-top:18px;">
-        <label>
-          REQUEST ADDITIONAL ATTACHMENT
-        </label>
-
-        <textarea
-          id="evidenceRequestMessage"
-          placeholder="Example: Please upload a screenshot showing the error."
-          style="margin-top:10px;min-height:80px;height:80px;"
-        ></textarea>
-
-        <div class="row" style="margin-top:10px;">
-          <button
-            type="button"
-            class="primary"
-            onclick="requestEvidence()"
-          >
-            Enable upload
-          </button>
-
-          <button
-            type="button"
-            class="copy-btn"
-            onclick="disableEvidenceUpload()"
-          >
-            Disable upload
-          </button>
+      <div class="sub-section">
+        <label for="evidenceRequestMessage">Request additional attachment</label>
+        <textarea id="evidenceRequestMessage" placeholder="Example: Please upload a screenshot showing the error." style="min-height:80px"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button type="button" class="primary inline" onclick="requestEvidence()">Enable upload</button>
+          <button type="button" class="copy-btn" onclick="disableEvidenceUpload()">Disable upload</button>
         </div>
-
-        <div
-          id="evidenceAccessMessage"
-          class="message"
-          style="margin-top:10px;"
-        ></div>
+        <div id="evidenceAccessMessage" class="message"></div>
       </div>
     </div>
-    </div>
-  </section>
-
+  </div></section>
 </main>
 
+<div id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+  <div class="modal">
+    <h3 id="delTitle">Delete report?</h3>
+    <p>Are you sure you want to delete this report? This action cannot be undone.</p>
+    <div class="row" style="justify-content:flex-end">
+      <button type="button" class="secondary" onclick="closeDeleteConfirm()">Cancel</button>
+      <button type="button" class="primary inline danger" onclick="deleteReport()">Delete report</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const MOD_KEY_STORAGE = "moderatorKey";
-  const STATUS_NAMES = { SUBMITTED: "Submitted", UNDER_REVIEW: "Under review", RESOLVED: "Resolved", DISMISSED: "Dismissed" };
-  const STATUS_CLASSES = { SUBMITTED: "status-submitted", UNDER_REVIEW: "status-review", RESOLVED: "status-resolved", DISMISSED: "status-dismissed" };
+const $ = id => document.getElementById(id);
+const KEY = "moderatorKey";
+const STATUS = {
+  SUBMITTED:{name:"Submitted",cls:"st-submitted",color:"var(--st-submitted)"},
+  UNDER_REVIEW:{name:"Under review",cls:"st-review",color:"var(--st-review)"},
+  RESOLVED:{name:"Resolved",cls:"st-resolved",color:"var(--st-resolved)"},
+  DISMISSED:{name:"Dismissed",cls:"st-dismissed",color:"var(--st-dismissed)"}
+};
+const ACTIVE = ["SUBMITTED","UNDER_REVIEW"];
+const EYE = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.7 19.7 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.6 19.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+document.querySelectorAll(".pw svg").forEach(s => s.innerHTML = EYE);
 
-  let modAuthed = false;
-  let activeModId = null;
-  let cachedReports = [];
-  let allReports = [];
-  let currentModReport = null;
+let modAuthed = false, activeModId = null, allReports = [], shownReports = [], lookupController = null, latestCaseCode = "";
 
-  function escapeHtml(s){ const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+/* ---------- helpers ---------- */
+const escapeHtml = s => { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; };
+const statusName = s => STATUS[s]?.name || s || "Unknown";
+const statusClass = s => STATUS[s]?.cls || "st-submitted";
+function formatDate(v){
+  if (!v) return "";
+  const d = new Date(v.endsWith("Z") ? v : v + "Z");
+  return isNaN(d) ? "" : d.toLocaleString();
+}
+function isSafeHttpUrl(v){
+  try { const u = new URL(v, location.origin); return u.protocol === "http:" || u.protocol === "https:"; } catch { return false; }
+}
+function setButtonLoading(btn, loading, loadingText, idleText){
+  btn.disabled = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span><span>${loadingText}</span>` : `<span class="btn-label">${idleText}</span>`;
+}
+function showMessage(el, text, kind){
+  if (!text){ el.style.display = "none"; el.textContent = ""; el.className = "message"; return; }
+  el.textContent = text; el.className = "message " + kind; el.style.display = "";
+}
+const friendlyError = e => e.name === "TypeError" ? "Couldn't reach the server. Check your connection and try again." : e.message;
+const isAuthError = e => e.message === "Not signed in." || e.message === "Session expired.";
+const json = r => r.json().catch(() => ({}));
 
-  function formatDate(value){
-    if (!value) return "";
-    const parsed = new Date(value.endsWith("Z") ? value : value + "Z");
-    return isNaN(parsed) ? "" : parsed.toLocaleString();
-  }
+function el(tag, text, cls, css){
+  const n = document.createElement(tag);
+  if (text != null) n.textContent = text;
+  if (cls) n.className = cls;
+  if (css) n.style.cssText = css;
+  return n;
+}
+function saveBlob(blob, response, fallback){
+  const m = (response.headers.get("content-disposition") || "").match(/filename="?([^";]+)"?/i);
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement("a"), { href:url, download:m ? m[1] : fallback });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
 
-  function isSafeHttpUrl(value){
-    try { const url = new URL(value, window.location.origin); return url.protocol === "http:" || url.protocol === "https:"; }
-    catch { return false; }
-  }
-
-  function setButtonLoading(btn, isLoading, loadingText, idleText){
-    btn.disabled = isLoading;
-    btn.innerHTML = isLoading
-      ? `<span class="spinner"></span><span>${loadingText}</span>`
-      : `<span class="btn-label">${idleText}</span>`;
-  }
-
-  function showMessage(el, text, kind){
-    if (!text){ el.style.display = "none"; el.textContent = ""; return; }
-    el.textContent = text;
-    el.className = "message " + kind;
-  }
-
-  function friendlyError(error){
-    return error.name === "TypeError" ? "Couldn't reach the server. Check your connection and try again." : error.message;
-  }
-
-  function renderThread(container, updates, replies = []){
-    container.innerHTML = "";
-
-    const hasUpdates = Array.isArray(updates) && updates.length;
-    const hasReplies = Array.isArray(replies) && replies.length;
-
-    if (!hasUpdates && !hasReplies){
-      container.innerHTML =
-        '<p style="color:var(--muted);font-size:13px">No messages yet.</p>';
-      return;
-    }
-
-    if (hasUpdates){
-      const heading = document.createElement("strong");
-      heading.textContent = "From Moderator";
-      heading.style.display = "block";
-      heading.style.marginBottom = "10px";
-
-      container.appendChild(heading);
-
-      updates.forEach(update => {
-        if (!update.message) return;
-
-        const div = document.createElement("div");
-        div.className = "msg mod";
-
-        const line = document.createElement("div");
-        line.textContent = update.message;
-
-        const status = document.createElement("small");
-        status.textContent =
-          `${STATUS_NAMES[update.status] || update.status || ""} • ${formatDate(update.created_at)}`;
-
-        div.appendChild(line);
-        div.appendChild(status);
-
-        container.appendChild(div);
-      });
-    }
-
-    if (hasReplies){
-      const heading = document.createElement("strong");
-      heading.textContent = "From You";
-      heading.style.display = "block";
-      heading.style.marginTop = "16px";
-      heading.style.marginBottom = "10px";
-
-      container.appendChild(heading);
-
-      replies.forEach(reply => {
-        if (!reply.message) return;
-
-        const div = document.createElement("div");
-        div.className = "msg";
-
-        const line = document.createElement("div");
-        line.textContent = reply.message;
-
-        const date = document.createElement("small");
-        date.textContent = formatDate(reply.created_at);
-
-        div.appendChild(line);
-        div.appendChild(date);
-
-        container.appendChild(div);
-      });
-    }
-  }
-
-  function renderModeratorThread(container, updates, replies = []) {
-    container.innerHTML = "";
-
-    const hasUpdates = Array.isArray(updates) && updates.length;
-    const hasReplies = Array.isArray(replies) && replies.length;
-
-    if (!hasUpdates && !hasReplies) {
-      container.innerHTML =
-        '<p style="color:var(--muted);font-size:13px">No messages yet.</p>';
-      return;
-    }
-
-    if (hasUpdates) {
-      const heading = document.createElement("strong");
-      heading.textContent = "From Moderator";
-      heading.style.display = "block";
-      heading.style.marginBottom = "10px";
-
-      container.appendChild(heading);
-
-      updates.forEach(update => {
-        if (!update.message) return;
-
-        const div = document.createElement("div");
-        div.className = "msg mod";
-
-        const line = document.createElement("div");
-        line.textContent = update.message;
-
-        const status = document.createElement("small");
-        status.textContent =
-          `${STATUS_NAMES[update.status] || update.status || ""} • ${formatDate(update.created_at)}`;
-
-        div.appendChild(line);
-        div.appendChild(status);
-
-        container.appendChild(div);
-      });
-    }
-
-    if (hasReplies) {
-      const heading = document.createElement("strong");
-      heading.textContent = "From Reporter";
-      heading.style.display = "block";
-      heading.style.marginTop = "16px";
-      heading.style.marginBottom = "10px";
-
-      container.appendChild(heading);
-
-      replies.forEach(reply => {
-        if (!reply.message) return;
-
-        const div = document.createElement("div");
-        div.className = "msg";
-
-        const line = document.createElement("div");
-        line.textContent = reply.message;
-
-        const date = document.createElement("small");
-        date.textContent = formatDate(reply.created_at);
-
-        div.appendChild(line);
-        div.appendChild(date);
-
-        container.appendChild(div);
-      });
-    }
-  }
-
-  function showView(name){
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.getElementById("view-" + name).classList.add("active");
-    document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-    document.getElementById("nav" + name[0].toUpperCase() + name.slice(1)).classList.add("active");
-
-    document.getElementById("heroSubtitle").style.display = (name === "moderator") ? "none" : "";
-
-    if (name === "moderator" && modAuthed){
-      document.getElementById("modGate").style.display = "none";
-      document.getElementById("modDashboard").style.display = "block";
-      document.getElementById("modDetail").style.display = "none";
-      reloadModList();
-    }
-  }
-  showView("submit");
-
-  const form = document.getElementById("reportForm");
-  const submitBtn = document.getElementById("submitBtn");
-  const attachmentInputEl = document.getElementById("attachment");
-  const attachmentNameEl = document.getElementById("attachmentName");
-  if (attachmentInputEl){
-    attachmentInputEl.addEventListener("change", () => {
-      const picked = attachmentInputEl.files && attachmentInputEl.files[0];
-      if (picked){
-        attachmentNameEl.textContent = `Selected: ${picked.name}`;
-        attachmentNameEl.style.display = "block";
-      } else {
-        attachmentNameEl.textContent = "";
-        attachmentNameEl.style.display = "none";
-      }
+/* One thread renderer for both reporter and moderator views */
+function renderThread(container, updates = [], replies = [], replyLabel = "From You"){
+  container.innerHTML = "";
+  updates = (updates || []).filter(u => u.message);
+  replies = (replies || []).filter(r => r.message);
+  if (!updates.length && !replies.length){ container.appendChild(el("p", "No messages yet.", "muted")); return; }
+  const add = (label, items, mod) => {
+    if (!items.length) return;
+    container.appendChild(el("h4", label));
+    items.forEach(i => {
+      const d = el("div", null, "msg" + (mod ? " mod" : ""));
+      d.appendChild(el("div", i.message));
+      d.appendChild(el("small", mod ? `${statusName(i.status)} • ${formatDate(i.created_at)}` : formatDate(i.created_at)));
+      container.appendChild(d);
     });
-  }  const submitMessage = document.getElementById("submitMessage");
-  const caseBox = document.getElementById("caseBox");
-  const caseCodeEl = document.getElementById("caseCode");
-  let latestCaseCode = "";
+  };
+  add("From Moderator", updates, true);
+  add(replyLabel, replies, false);
+}
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    showMessage(submitMessage, "", "");
-    caseBox.style.display = "none";
+function toggleVisibility(inputId, btn, label){
+  const input = $(inputId), showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.querySelector("svg").innerHTML = showing ? EYE : EYE_OFF;
+  btn.setAttribute("aria-label", `${showing ? "Show" : "Hide"} ${label}`);
+}
 
-    const category = document.getElementById("category").value;
-    const description = document.getElementById("description").value.trim();
-    const attachmentInput = document.getElementById("attachment");
-    const attachment = attachmentInput && attachmentInput.files ? attachmentInput.files[0] : null;
-    const evidence = document.getElementById("evidence").value.trim();
+/* ---------- navigation ---------- */
+function showView(name){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  $("view-" + name).classList.add("active");
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  $("nav" + name[0].toUpperCase() + name.slice(1)).classList.add("active");
+  $("heroSubtitle").style.display = name === "moderator" ? "none" : "";
+  if (name === "moderator" && modAuthed){
+    $("modGate").style.display = "none";
+    $("modDashboard").style.display = "block";
+    $("modDetail").style.display = "none";
+    loadReports();
+  }
+}
+showView("submit");
 
-    if (!category || !description){
-      showMessage(submitMessage, "Please choose a category and describe what's happening.", "error");
-      return;
-    }
-    if (attachment && attachment.size > 10 * 1024 * 1024){
-      showMessage(submitMessage, "Attachment must be 10 MB or smaller.", "error");
-      return;
-    }
-    if (evidence && !isSafeHttpUrl(evidence)){
-      showMessage(submitMessage, "Evidence link must be a valid http(s) URL.", "error");
-      return;
-    }
+/* ---------- submit ---------- */
+const form = $("reportForm"), submitBtn = $("submitBtn"), submitMessage = $("submitMessage");
 
-    setButtonLoading(submitBtn, true, "Submitting...", "Submit report");
+$("attachment").addEventListener("change", e => {
+  const f = e.target.files[0], n = $("attachmentName");
+  n.textContent = f ? `Selected: ${f.name}` : "";
+  n.style.display = f ? "block" : "none";
+});
 
-    try {
-      const formData = new FormData();
-      formData.append("category", category);
-      formData.append("description", description);
-      if (attachment) formData.append("attachment", attachment);
-      if (evidence) formData.append("evidence_url", evidence);
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  showMessage(submitMessage, "");
+  $("caseBox").style.display = "none";
 
-      const response = await fetch("/reports", {
-        method: "POST",
-        body: formData
-      });
+  const category = $("category").value;
+  const description = $("description").value.trim();
+  const attachment = $("attachment").files[0];
+  const evidence = $("evidence").value.trim();
 
-      let result = {};
-      try { result = await response.json(); } catch {}
+  if (!category || !description) return showMessage(submitMessage, "Please choose a category and describe what's happening.", "error");
+  if (attachment && attachment.size > 10 * 1024 * 1024) return showMessage(submitMessage, "Attachment must be 10 MB or smaller.", "error");
+  if (evidence && !isSafeHttpUrl(evidence)) return showMessage(submitMessage, "Evidence link must be a valid http(s) URL.", "error");
 
-      if (!response.ok) throw new Error(result.error || "Failed to submit report.");
+  setButtonLoading(submitBtn, true, "Submitting...", "Submit report");
+  try {
+    const fd = new FormData();
+    fd.append("category", category);
+    fd.append("description", description);
+    if (attachment) fd.append("attachment", attachment);
+    if (evidence) fd.append("evidence_url", evidence);
 
-      latestCaseCode = result.case_code;
-      caseCodeEl.textContent = result.case_code;
-      caseBox.style.display = "block";
-      form.style.display = "none";
-      submitMessage.style.display = "none";
-      submitMessage.textContent = "";
-      submitMessage.className = "message";
-      form.reset();
-    } catch (error) {
-      showMessage(submitMessage, friendlyError(error), "error");
-    } finally {
-      setButtonLoading(submitBtn, false, "", "Submit report");
-    }
-  });
+    const res = await fetch("/reports", { method:"POST", body:fd });
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to submit report.");
 
-  function startAnotherReport(){
-    const form = document.getElementById("reportForm");
-    const caseBox = document.getElementById("caseBox");
-    const submitMessage = document.getElementById("submitMessage");
-
+    latestCaseCode = data.case_code;
+    $("caseBox").style.display = "block";
+    $("caseBox").classList.remove("show"); void $("caseBox").offsetWidth; $("caseBox").classList.add("show");
+    decryptCode($("caseCode"), data.case_code);
+    form.style.display = "none";
     form.reset();
-
-    caseBox.style.display = "none";
-
-    if (submitMessage) {
-      submitMessage.style.display = "none";
-      submitMessage.textContent = "";
-      submitMessage.className = "message";
-    }
-
-    const attachmentName = document.getElementById("attachmentName");
-
-    if (attachmentName) {
-      attachmentName.textContent = "";
-      attachmentName.style.display = "none";
-    }
-
-    form.style.display = "";
+    $("attachmentName").style.display = "none";
+    scanDescription();
+  } catch (err) {
+    showMessage(submitMessage, friendlyError(err), "error");
+  } finally {
+    setButtonLoading(submitBtn, false, "", "Submit report");
   }
+});
 
-  async function copyCaseCode(){
-    if (!latestCaseCode) return;
-    await navigator.clipboard.writeText(latestCaseCode);
-    const btn = document.getElementById("copyBtn");
-    btn.textContent = "Copied ✓";
-    setTimeout(() => btn.textContent = "Copy case code", 1800);
-  }
+function startAnotherReport(){
+  form.reset();
+  $("caseBox").style.display = "none";
+  $("caseBox").classList.remove("show");
+  scanDescription();
+  $("attachmentName").style.display = "none";
+  showMessage(submitMessage, "");
+  form.style.display = "";
+}
 
-  function updateReportTimeline(status, hasModeratorNote) {
-    const steps = document.querySelectorAll(
-      ".report-timeline .timeline-step"
-    );
+async function copyCaseCode(){
+  if (!latestCaseCode) return;
+  const btn = $("copyBtn");
+  try { await navigator.clipboard.writeText(latestCaseCode); btn.textContent = "Copied ✓"; }
+  catch { btn.textContent = "Copy failed — select manually"; }
+  setTimeout(() => btn.textContent = "Copy case code", 1800);
+}
 
-    if (!steps.length) return;
+/* ---------- extras ---------- */
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    steps.forEach((step) => {
-      step.classList.remove("active", "completed");
+function decryptCode(node, text){
+  if (reduceMotion){ node.textContent = text; return; }
+  const glyphs = "ABCDEF0123456789#$%&*", total = 20; let f = 0;
+  const t = setInterval(() => {
+    f++;
+    node.textContent = [...text].map((c, i) => c === "-" || i < f * text.length / total ? c : glyphs[Math.random() * glyphs.length | 0]).join("");
+    if (f >= total){ clearInterval(t); node.textContent = text; }
+  }, 40);
+}
 
-      const dot = step.querySelector(".timeline-dot");
+function saveCaseCode(){
+  if (!latestCaseCode) return;
+  const a = Object.assign(document.createElement("a"), {
+    href:URL.createObjectURL(new Blob([`WhistleDrop case code:\n${latestCaseCode}\n\nKeep this private. It is the only way to check your report.\n`], {type:"text/plain"})),
+    download:"whistledrop-case-code.txt"
+  });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
 
-      if (dot) {
-        dot.style.background = "#344454";
-        dot.style.borderColor = "#506477";
-        dot.style.boxShadow = "none";
-      }
+/* Anonymity scanner: flags text that could identify the reporter */
+const PII = [
+  [/[\w.+-]+@[\w-]+\.[\w.]+/, "an email address"],
+  [/(\+?\d[\d\s().-]{8,}\d)/, "a phone number"],
+  [/\b(my name is|i am called|i'm called|call me)\b/i, "your name"],
+  [/\b(my (employee|staff|badge|id) (id|number|no))\b/i, "an ID number"]
+];
+function scanDescription(){
+  const v = $("description").value, scan = $("scan");
+  $("meterFill").style.width = Math.min(100, v.length / 3) + "%";
+  scan.classList.remove("ok", "warn");
+  if (!v.trim()){ $("scanText").textContent = "Anonymity check: start typing"; return; }
+  const hit = PII.find(([re]) => re.test(v));
+  if (hit){ scan.classList.add("warn"); $("scanText").textContent = `Possible identifying detail: ${hit[1]}. Consider removing it.`; }
+  else { scan.classList.add("ok"); $("scanText").textContent = `No obvious identifiers · ${v.length} characters`; }
+}
+$("description").addEventListener("input", scanDescription);
 
-      step.style.color = "#718096";
-      step.style.fontWeight = "400";
+if (matchMedia("(hover:hover)").matches && !reduceMotion){
+  let raf = 0;
+  addEventListener("pointermove", e => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      document.documentElement.style.setProperty("--mx", e.clientX + "px");
+      document.documentElement.style.setProperty("--my", e.clientY + "px");
+      raf = 0;
     });
+  });
+}
 
-    function green(step) {
-      step.classList.add("completed");
-      step.style.color = "#5ee6a8";
+/* ---------- track ---------- */
+function toggleTrackDetails(){
+  const d = $("trackDetails"), show = d.style.display !== "block";
+  d.style.display = show ? "block" : "none";
+  $("viewReportBtn").textContent = show ? "Hide report" : "View report";
+}
 
-      const dot = step.querySelector(".timeline-dot");
-      if (dot) {
-        dot.style.background = "#35d07f";
-        dot.style.borderColor = "#35d07f";
-        dot.style.boxShadow = "0 0 10px rgba(53, 208, 127, .45)";
-      }
-    }
+function updateTrackTimeline(status){
+  const term = $("terminalStatus"), tl = $("timeline");
+  const steps = [$("tSubmitted"), $("tReview"), $("tResolved")];
+  const lines = tl.querySelectorAll(".t-line");
+  term.style.display = "none"; term.className = ""; term.textContent = "";
+  tl.style.display = "flex";
+  steps.forEach(s => s.classList.remove("done", "current"));
+  lines.forEach(l => l.classList.remove("done"));
 
-    function red(step) {
-      step.classList.add("active");
-      step.style.color = "#ff6b6b";
-      step.style.fontWeight = "600";
-
-      const dot = step.querySelector(".timeline-dot");
-      if (dot) {
-        dot.style.background = "#ff3b3b";
-        dot.style.borderColor = "#ff3b3b";
-        dot.style.boxShadow = "0 0 12px rgba(255, 59, 59, .55)";
-      }
-    }
-
-    if (status === "SUBMITTED") {
-      red(steps[0]);
-      return;
-    }
-
-    if (status === "UNDER_REVIEW") {
-      green(steps[0]);
-      red(steps[1]);
-
-      if (hasModeratorNote === true) {
-        green(steps[2]);
-      }
-
-      return;
-    }
-
-    if (status === "RESOLVED") {
-      green(steps[0]);
-      green(steps[1]);
-
-      if (hasModeratorNote === true) {
-        green(steps[2]);
-      }
-
-      red(steps[3]);
-      return;
-    }
-
-    if (status === "DISMISSED") {
-      green(steps[0]);
-      green(steps[1]);
-
-      if (hasModeratorNote === true) {
-        green(steps[2]);
-      }
-
-      red(steps[3]);
-    }
+  if (status === "SUBMITTED"){ steps[0].classList.add("current"); return; }
+  steps[0].classList.add("done");
+  lines[0].classList.add("done");
+  if (status === "UNDER_REVIEW"){ steps[1].classList.add("current"); return; }
+  if (status === "RESOLVED" || status === "DISMISSED"){
+    tl.style.display = "none";
+    term.textContent = statusName(status);
+    term.className = status.toLowerCase();
+    term.style.display = "block";
   }
+}
 
-  let lookupController = null;
-
-  async function lookupCase(){
-  const code = document.getElementById("trackCode").value.trim();
-  const msg = document.getElementById("trackMessage");
-  const result = document.getElementById("trackResult");
-  const btn = document.getElementById("trackBtn");
-
+async function lookupCase(){
+  const code = $("trackCode").value.trim();
+  const msg = $("trackMessage"), result = $("trackResult"), btn = $("trackBtn");
   result.style.display = "none";
+  $("trackDetails").style.display = "none";
+  $("viewReportBtn").textContent = "View report";
 
-  const details = document.getElementById("trackDetails");
-  const viewBtn = document.getElementById("viewReportBtn");
+  if (!code) return showMessage(msg, "Please enter your case code.", "error");
 
-  if (details) details.style.display = "none";
-  if (viewBtn) viewBtn.textContent = "View report";
-
-  if (!code){
-    showMessage(msg, "Please enter your case code.", "error");
-    return;
-  }
-
-  if (lookupController) lookupController.abort();
+  lookupController?.abort();
   lookupController = new AbortController();
-
   showMessage(msg, "Looking up your report…", "info");
   setButtonLoading(btn, true, "Searching...", "Find report");
 
   try {
-    const response = await fetch(
-      `/reports/${encodeURIComponent(code)}`,
-      { signal: lookupController.signal }
-    );
-
-    let data = {};
-    try {
-      data = await response.json();
-    } catch {}
-
-    if (response.status === 404) {
-      throw new Error(
-        data.error || "No report found for that case code."
-      );
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || "Something went wrong looking up your report."
-      );
-    }
-
-    document.getElementById("trackCategory").textContent =
-      data.category || "Anonymous report";
-
-    document.getElementById("trackStatus").textContent =
-      STATUS_NAMES[data.status] || data.status || "Unknown";
-
-    document.getElementById("trackStatus").className =
-      "status-pill " + (STATUS_CLASSES[data.status] || "status-submitted");
-
-    document.getElementById("trackDescription").textContent =
-      data.description || "No description provided.";
+    const res = await fetch(`/reports/${encodeURIComponent(code)}`, { signal:lookupController.signal });
+    const data = await json(res);
+    if (res.status === 404) throw new Error(data.error || "No report found for that case code.");
+    if (!res.ok) throw new Error(data.error || "Something went wrong looking up your report.");
 
     const updates = data.status_updates || [];
+    $("trackCategory").textContent = data.category || "Anonymous report";
+    $("trackStatus").textContent = statusName(data.status);
+    $("trackStatus").className = "status-pill " + statusClass(data.status);
+    $("trackDescription").textContent = data.description || "No description provided.";
 
-    const replies = data.replies || [];
-
-    renderThread(
-      document.getElementById("trackThread"),
-      updates,
-      replies
-    );
-
-    const latestUpdate = updates.length
-      ? updates[updates.length - 1]
-      : null;
-
-    const latestNote = document.getElementById("trackLatestNote");
-
-    if (latestUpdate && latestUpdate.message) {
-      latestNote.textContent = "Moderator has sent you a note";
-    } else if (data.status === "SUBMITTED") {
-      latestNote.textContent =
-        "Your report hasn't been picked up yet.";
-    } else {
-      latestNote.textContent =
-        "Moderator is working on it.";
+    const thread = $("trackThread");
+    renderThread(thread, updates, data.replies, "From You");
+    if (Array.isArray(data.evidence) && data.evidence.length){
+      thread.appendChild(el("h4", "Evidence submitted", "", "margin-top:12px"));
+      data.evidence.forEach(i => thread.appendChild(el("div", `📎 ${i.file_name} — submitted ${formatDate(i.created_at)}`, "muted")));
     }
 
-    document.getElementById("trackDetails").style.display = "none";
-    document.getElementById("viewReportBtn").textContent = "View report";
+    const hasNote = updates.some(u => u.message);
+    $("trackLatestNote").textContent = hasNote ? "Moderator has sent you a note"
+      : data.status === "SUBMITTED" ? "Your report hasn't been picked up yet." : "Moderator is working on it.";
 
-    updateTrackTimeline(data.status, updates);
+    updateTrackTimeline(data.status);
 
-    const trackThread = document.getElementById("trackThread");
+    const box = $("reporterEvidenceBox");
+    if (data.evidence_upload_enabled && data.evidence_request){
+      $("evidenceRequestText").textContent = data.evidence_request.message;
+      box.style.display = "block";
+    } else box.style.display = "none";
 
-    if (Array.isArray(data.evidence) && data.evidence.length) {
-      const evidenceHeading = document.createElement("div");
-
-      evidenceHeading.textContent = "Evidence submitted";
-      evidenceHeading.style.cssText =
-        "margin-top:18px;font-weight:700;";
-
-      trackThread.appendChild(evidenceHeading);
-
-      data.evidence.forEach((item) => {
-        const evidenceItem = document.createElement("div");
-
-        evidenceItem.textContent =
-          `📎 ${item.file_name} — submitted ${formatDate(item.created_at)}`;
-
-        evidenceItem.style.cssText =
-          "margin-top:8px;color:var(--muted);";
-
-        trackThread.appendChild(evidenceItem);
-      });
-    }
-
-    const evidenceBox = document.getElementById("reporterEvidenceBox");
-    const evidenceRequestText = document.getElementById("evidenceRequestText");
-
-    if (
-      data.evidence_upload_enabled &&
-      data.evidence_request
-    ) {
-      evidenceRequestText.textContent =
-        data.evidence_request.message;
-
-      evidenceBox.style.display = "block";
-    } else {
-      evidenceBox.style.display = "none";
-    }
-
-    showMessage(msg, "", "");
-
+    showMessage(msg, "");
     result.style.display = "block";
-
-  } catch (error) {
-    if (error.name === "AbortError") return;
-
-    showMessage(msg, friendlyError(error), "error");
-
+  } catch (err) {
+    if (err.name !== "AbortError") showMessage(msg, friendlyError(err), "error");
   } finally {
     lookupController = null;
     setButtonLoading(btn, false, "", "Find report");
   }
 }
 
-  async function sendReporterReply(){
-    const code = document.getElementById("trackCode").value.trim();
-    const replyInput = document.getElementById("reporterReply");
-    const messageBox = document.getElementById("reporterReplyMessage");
-    const btn = document.getElementById("reporterReplyBtn");
+$("trackCode").addEventListener("input", () => { $("trackResult").style.display = "none"; showMessage($("trackMessage"), ""); });
+$("trackCode").addEventListener("keydown", e => { if (e.key === "Enter") lookupCase(); });
 
-    const message = replyInput.value.trim();
+async function sendReporterReply(){
+  const code = $("trackCode").value.trim(), input = $("reporterReply"), box = $("reporterReplyMessage"), btn = $("reporterReplyBtn");
+  const message = input.value.trim();
+  if (!code) return showMessage(box, "Please enter your case code first.", "error");
+  if (!message) return showMessage(box, "Please write a reply.", "error");
 
-    if (!code){
-      showMessage(messageBox, "Please enter your case code first.", "error");
-      return;
-    }
-
-    if (!message){
-      showMessage(messageBox, "Please write a reply.", "error");
-      return;
-    }
-
-    setButtonLoading(btn, true, "Sending...", "Send reply");
-
-    try {
-      const response = await fetch(
-        `/reports/${encodeURIComponent(code)}/reply`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message
-          })
-        }
-      );
-
-      let data = {};
-      try {
-        data = await response.json();
-      } catch {}
-
-      if (!response.ok){
-        throw new Error(data.error || "Failed to send reply.");
-      }
-
-      replyInput.value = "";
-
-      showMessage(
-        messageBox,
-        "Reply sent successfully.",
-        "success"
-      );
-
-      // Refresh the report so the new conversation appears
-      await lookupCase();
-
-    } catch (error) {
-      showMessage(
-        messageBox,
-        friendlyError(error),
-        "error"
-      );
-    } finally {
-      setButtonLoading(btn, false, "", "Send reply");
-    }
-  }
-
-  function toggleTrackDetails(){
-    const details = document.getElementById("trackDetails");
-    const btn = document.getElementById("viewReportBtn");
-
-    if (!details || !btn) return;
-
-    const isHidden =
-      details.style.display === "none" ||
-      details.style.display === "";
-
-    if (isHidden) {
-      details.style.display = "block";
-      btn.textContent = "Hide report";
-    } else {
-      details.style.display = "none";
-      btn.textContent = "View report";
-    }
-  }
-
-  function updateTrackTimeline(status, updates) {
-    const terminalStatus = document.getElementById("terminalTrackStatus");
-    const timeline = document.querySelector("#view-track .track-timeline");
-
-    if (terminalStatus) {
-      terminalStatus.style.display = "none";
-      terminalStatus.className = "";
-      terminalStatus.textContent = "";
-    }
-
-    if (timeline) {
-      timeline.style.display = "flex";
-    }
-
-    const submitted = document.getElementById("timelineSubmitted");
-    const review = document.getElementById("timelineReview");
-    const resolved = document.getElementById("timelineResolved");
-
-    const lines = document.querySelectorAll(".timeline-line");
-
-    if (!submitted || !review || !resolved) return;
-
-    [submitted, review, resolved].forEach((step) => {
-      step.classList.remove("completed", "current");
+  setButtonLoading(btn, true, "Sending...", "Send reply");
+  try {
+    const res = await fetch(`/reports/${encodeURIComponent(code)}/reply`, {
+      method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify({ message })
     });
-
-    lines.forEach((line) => {
-      line.classList.remove("completed");
-    });
-
-    const hasModeratorNote =
-      Array.isArray(updates) && updates.length > 0;
-
-    submitted.classList.add("completed");
-
-    if (status === "SUBMITTED") {
-      submitted.classList.remove("completed");
-      submitted.classList.add("current");
-      return;
-    }
-
-    review.classList.add("current");
-    lines[0]?.classList.add("completed");
-
-    if (status === "UNDER_REVIEW") {
-      return;
-    }
-
-    if (status === "RESOLVED") {
-      if (timeline) timeline.style.display = "none";
-
-      terminalStatus.textContent = "Resolved";
-      terminalStatus.className = "resolved";
-      terminalStatus.style.display = "block";
-
-      return;
-    }
-
-    if (status === "DISMISSED") {
-      if (timeline) timeline.style.display = "none";
-
-      terminalStatus.textContent = "Dismissed";
-      terminalStatus.className = "dismissed";
-      terminalStatus.style.display = "block";
-
-      return;
-    }
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to send reply.");
+    input.value = "";
+    await lookupCase();
+    $("trackDetails").style.display = "block";
+    $("viewReportBtn").textContent = "Hide report";
+    showMessage($("reporterReplyMessage"), "Reply sent successfully.", "success");
+  } catch (err) {
+    showMessage(box, friendlyError(err), "error");
+  } finally {
+    setButtonLoading(btn, false, "", "Send reply");
   }
-
-  const trackCodeInput = document.getElementById("trackCode");
-
-trackCodeInput.addEventListener("input", () => {
-  document.getElementById("trackResult").style.display = "none";
-  document.getElementById("viewReportBtn").textContent = "View report";
-  showMessage(document.getElementById("trackMessage"), "", "");
-});
-
-trackCodeInput.addEventListener("keydown", e => {
-  if (e.key === "Enter") lookupCase();
-});
-
-  async function modFetch(url, options = {}){
-    const key = sessionStorage.getItem(MOD_KEY_STORAGE);
-    if (!key){ modLogout("Your session has ended. Please sign in again."); throw new Error("Not signed in."); }
-    const response = await fetch(url, { ...options, headers: { ...(options.headers || {}), "x-moderator-key": key } });
-    if (response.status === 401 || response.status === 403){
-      modLogout("Your session has expired. Please sign in again.");
-      throw new Error("Session expired.");
-    }
-    return response;
-  }
-
-  function modLogout(message){
-    sessionStorage.removeItem(MOD_KEY_STORAGE);
-    modAuthed = false;
-    document.getElementById("modDashboard").style.display = "none";
-    document.getElementById("modDetail").style.display = "none";
-    document.getElementById("modGate").style.display = "block";
-    document.getElementById("modPass").value = "";
-    document.getElementById("modPass").type = "password";
-    document.getElementById("modPassEyeIcon").innerHTML = EYE_ICON;
-    document.getElementById("modPassToggle").setAttribute("aria-label", "Show moderator key");
-    showMessage(document.getElementById("modMessage"), message || "", message ? "error" : "");
-  }
-
-  const EYE_ICON = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>';
-  const EYE_OFF_ICON = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a19.7 19.7 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a19.6 19.6 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-
-  function toggleTrackDetails(){
-  const details = document.getElementById("trackDetails");
-  const button = document.getElementById("viewReportBtn");
-
-  const isHidden = details.style.display === "none";
-
-  details.style.display = isHidden ? "block" : "none";
-  button.textContent = isHidden ? "Hide report" : "View report";
 }
 
-  function toggleTrackCodeVisibility(){
-    const input = document.getElementById("trackCode");
-    const btn = document.getElementById("trackCodeToggle");
-    const icon = document.getElementById("trackCodeEyeIcon");
-    const showing = input.type === "text";
-    input.type = showing ? "password" : "text";
-    icon.innerHTML = showing ? EYE_ICON : EYE_OFF_ICON;
-    btn.setAttribute("aria-label", showing ? "Show case code" : "Hide case code");
+async function uploadReporterEvidence(){
+  const code = $("trackCode").value.trim(), input = $("reporterEvidenceInput"), msg = $("reporterEvidenceMessage"), btn = $("reporterEvidenceBtn");
+  const file = input.files[0];
+  if (!file) return showMessage(msg, "Please choose a file.", "error");
+  if (file.size > 10 * 1024 * 1024) return showMessage(msg, "File must be 10 MB or smaller.", "error");
+
+  const fd = new FormData();
+  fd.append("evidence", file);
+  btn.disabled = true; btn.textContent = "Uploading...";
+  try {
+    const res = await fetch(`/reports/${encodeURIComponent(code)}/evidence`, { method:"POST", body:fd });
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to upload evidence.");
+    input.value = "";
+    await lookupCase();
+    showMessage($("reporterEvidenceMessage"), "Evidence uploaded successfully.", "success");
+  } catch (err) {
+    showMessage(msg, friendlyError(err), "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Upload evidence";
   }
+}
 
-  function toggleModPassVisibility(){
-    const input = document.getElementById("modPass");
-    const btn = document.getElementById("modPassToggle");
-    const icon = document.getElementById("modPassEyeIcon");
-    const showing = input.type === "text";
-    input.type = showing ? "password" : "text";
-    icon.innerHTML = showing ? EYE_ICON : EYE_OFF_ICON;
-    btn.setAttribute("aria-label", showing ? "Show moderator key" : "Hide moderator key");
+/* ---------- moderator auth ---------- */
+async function modFetch(url, options = {}){
+  const key = sessionStorage.getItem(KEY);
+  if (!key){ modLogout("Your session has ended. Please sign in again."); throw new Error("Not signed in."); }
+  const res = await fetch(url, { ...options, headers:{ ...(options.headers || {}), "x-moderator-key":key } });
+  if (res.status === 401 || res.status === 403){
+    modLogout("Your session has expired. Please sign in again.");
+    throw new Error("Session expired.");
   }
+  return res;
+}
 
-  async function modLogin(){
-    const passInput = document.getElementById("modPass");
-    const pass = passInput.value.trim();
-    const msg = document.getElementById("modMessage");
-    const btn = document.getElementById("modLoginBtn");
+function modLogout(message){
+  sessionStorage.removeItem(KEY);
+  modAuthed = false;
+  $("modDashboard").classList.remove("max");
+  $("maximizeModBtn").textContent = "Maximize";
+  $("modDashboard").style.display = "none";
+  $("modDetail").style.display = "none";
+  $("modGate").style.display = "block";
+  $("modPass").value = ""; $("modPass").type = "password";
+  const svg = document.querySelector("#modGate .pw svg"); if (svg) svg.innerHTML = EYE;
+  showMessage($("modMessage"), message || "", "error");
+}
 
-    if (!pass){ showMessage(msg, "Please enter the moderator key.", "error"); return; }
+async function modLogin(){
+  const input = $("modPass"), pass = input.value.trim(), msg = $("modMessage"), btn = $("modLoginBtn");
+  if (!pass) return showMessage(msg, "Please enter the moderator key.", "error");
 
-    setButtonLoading(btn, true, "Signing in...", "Sign in");
+  setButtonLoading(btn, true, "Signing in...", "Sign in");
+  try {
+    const res = await fetch("/moderator/reports", { headers:{ "x-moderator-key":pass } });
+    const data = await json(res);
+    if (res.status === 401 || res.status === 403) throw new Error("Incorrect moderator key.");
+    if (!res.ok) throw new Error(data.error || "Couldn't sign in right now. Try again.");
 
-    try {
-      const response = await fetch("/moderator/reports", { headers: { "x-moderator-key": pass } });
-      let data = {};
-      try { data = await response.json(); } catch {}
-
-      if (response.status === 401 || response.status === 403) throw new Error("Incorrect moderator key.");
-      if (!response.ok) throw new Error(data.error || "Couldn't sign in right now. Try again.");
-
-      sessionStorage.setItem(MOD_KEY_STORAGE, pass);
-      modAuthed = true;
-      passInput.value = "";
-      showMessage(msg, "", "");
-
-      document.getElementById("modGate").style.display = "none";
-      document.getElementById("modDashboard").style.display = "block";
-      allReports = Array.isArray(data) ? data : (data?.reports || []);
-      document.getElementById("filterStatus").value = "ACTIVE";
-      reloadModList();
-    } catch (error) {
-      showMessage(msg, friendlyError(error), "error");
-    } finally {
-      setButtonLoading(btn, false, "", "Sign in");
-    }
+    sessionStorage.setItem(KEY, pass);
+    modAuthed = true;
+    input.value = "";
+    showMessage(msg, "");
+    $("modGate").style.display = "none";
+    $("modDashboard").style.display = "block";
+    allReports = Array.isArray(data) ? data : data.reports || [];
+    $("filterStatus").value = "ACTIVE";
+    applyFilters();
+  } catch (err) {
+    showMessage(msg, friendlyError(err), "error");
+  } finally {
+    setButtonLoading(btn, false, "", "Sign in");
   }
+}
+$("modPass").addEventListener("keydown", e => { if (e.key === "Enter") modLogin(); });
 
-  (async function tryResumeModSession(){
-    const key = sessionStorage.getItem(MOD_KEY_STORAGE);
-    if (!key) return;
-    try {
-      const response = await modFetch("/moderator/reports");
-      if (response.ok){
-        modAuthed = true;
-        document.getElementById("modGate").style.display = "none";
-        document.getElementById("modDashboard").style.display = "block";
-        const resumeData = await response.json();
-        allReports = Array.isArray(resumeData) ? resumeData : (resumeData?.reports || []);
-        renderModList(resumeData);
-      }
-    } catch {}
-  })();
+(async function resumeSession(){
+  if (!sessionStorage.getItem(KEY)) return;
+  try {
+    const res = await modFetch("/moderator/reports");
+    if (!res.ok) return;
+    const data = await res.json();
+    modAuthed = true;
+    $("modGate").style.display = "none";
+    $("modDashboard").style.display = "block";
+    allReports = Array.isArray(data) ? data : data.reports || [];
+    applyFilters();
+  } catch {}
+})();
 
-  function toggleModeratorMaximize(){
-    const dashboard = document.getElementById("modDashboard");
-    const button = document.getElementById("maximizeModBtn");
+/* ---------- moderator dashboard ---------- */
+function toggleMaximize(){
+  const max = $("modDashboard").classList.toggle("max");
+  $("maximizeModBtn").textContent = max ? "Minimize" : "Maximize";
+}
 
-    if (!dashboard || !button) return;
+function setStatusFilter(status){
+  $("filterStatus").value = status;
+  applyFilters();
+}
 
-    const maximized = dashboard.classList.toggle("maximized");
+function updateStats(){
+  const count = s => allReports.filter(r => r.status === s).length;
+  $("statSubmitted").textContent = count("SUBMITTED");
+  $("statUnderReview").textContent = count("UNDER_REVIEW");
+  $("statResolved").textContent = count("RESOLVED");
+  $("statDismissed").textContent = count("DISMISSED");
+  $("statTotal").textContent = count("SUBMITTED") + count("UNDER_REVIEW");
+}
 
-    button.textContent = maximized
-      ? "MINIMIZE"
-      : "MAXIMIZE";
+/* Filters/sorts the in-memory list; loadReports() refreshes it from the server */
+function applyFilters(){
+  const status = $("filterStatus").value, category = $("filterCategory").value, sort = $("sortReports").value;
+
+  document.querySelectorAll("#modDashboard .status-link").forEach(b => b.classList.remove("active"));
+  (status === "ACTIVE" ? $("linkActive") : document.querySelector(`.stat[data-s="${status}"] .status-link`))?.classList.add("active");
+
+  let list = allReports.filter(r => status === "ACTIVE" ? ACTIVE.includes(r.status) : r.status === status);
+  if (category) list = list.filter(r => r.category === category);
+
+  list.sort((a, b) =>
+    sort === "oldest" ? new Date(a.created_at) - new Date(b.created_at)
+    : sort === "type" ? (a.category || "").localeCompare(b.category || "")
+    : new Date(b.created_at) - new Date(a.created_at));
+
+  shownReports = list;
+  updateStats();
+  renderModList(list);
+}
+
+async function loadReports(){
+  $("modList").innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+  try {
+    const res = await modFetch("/moderator/reports");
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to load reports.");
+    allReports = Array.isArray(data) ? data : data.reports || [];
+    applyFilters();
+  } catch (err) {
+    if (isAuthError(err)) return;
+    $("modList").innerHTML = `<div class="empty" style="color:var(--danger)">${escapeHtml(friendlyError(err))}</div>`;
   }
+}
 
-  function updateStatusHighlight(){
-    const selectedStatus = document.getElementById("filterStatus").value;
+function renderModList(reports){
+  const list = $("modList");
+  list.innerHTML = "";
+  if (!reports.length){ list.innerHTML = '<div class="empty">No reports match these filters.</div>'; return; }
 
-    document.querySelectorAll(".status-link").forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.status === selectedStatus
-      );
-    });
+  const frag = document.createDocumentFragment();
+  reports.forEach((r, i) => {
+    const row = el("div", null, "report-row");
+    row.style.setProperty("--c", STATUS[r.status]?.color || "var(--border)");
+    row.style.setProperty("--i", Math.min(i, 12));
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `${r.category} report, status ${statusName(r.status)}`);
+    row.onclick = () => openModDetail(r.id);
+    row.onkeydown = e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); openModDetail(r.id); } };
+    row.innerHTML = `
+      <div class="top">
+        <span class="cat">${escapeHtml(r.category || "Uncategorized")}${r.has_attachment ? " 📎" : ""}</span>
+        <span class="status-pill ${statusClass(r.status)}">${escapeHtml(statusName(r.status))}</span>
+      </div>
+      <div class="desc">${escapeHtml(r.description || "")}</div>
+      <small class="muted">${escapeHtml(formatDate(r.created_at) || "Date unavailable")}</small>`;
+    frag.appendChild(row);
+  });
+  list.appendChild(frag);
+}
 
-    const reportsLink = document.querySelector(".reports-link");
-
-    if (reportsLink) {
-      reportsLink.classList.toggle("active", selectedStatus === "ACTIVE");
-    }
+function showDetailMessage(text, kind = "error"){
+  let msg = $("modDetailMessage");
+  if (!msg){
+    msg = el("div", null, "message");
+    msg.id = "modDetailMessage";
+    $("modDetail").prepend(msg);
   }
-
-  function showAllReports(){
-    const filter = document.getElementById("filterStatus");
-
-    filter.value = "ACTIVE";
-
-    document.querySelectorAll(".status-link").forEach(button => {
-      button.classList.remove("active");
-    });
-
-    const reportsLink = document.querySelector(".reports-link");
-
-    if (reportsLink) {
-      reportsLink.classList.add("active");
-    }
-
-    const category = document.getElementById("filterCategory").value;
-
-    let filtered = allReports.filter(
-      report =>
-        report.status === "SUBMITTED" ||
-        report.status === "UNDER_REVIEW"
-    );
-
-    if (category) {
-      filtered = filtered.filter(
-        report => report.category === category
-      );
-    }
-
-    cachedReports = filtered;
-
-    renderModList(filtered, allReports);
-  }
-
-  function filterByStatus(status){
-    const filter = document.getElementById("filterStatus");
-
-    filter.value = status;
-
-    document.querySelectorAll(".status-link").forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.status === status
-      );
-    });
-
-    const reportsLink = document.querySelector(".reports-link");
-    if (reportsLink) {
-      reportsLink.classList.remove("active");
-    }
-
-    const category = document.getElementById("filterCategory").value;
-
-    let filtered = allReports.filter(
-      report => report.status === status
-    );
-
-    if (category) {
-      filtered = filtered.filter(
-        report => report.category === category
-      );
-    }
-
-    cachedReports = filtered;
-
-    renderModList(filtered, allReports);
-  }
-
-  async function reloadModList(){
-    const list = document.getElementById("modList");
-
-    list.innerHTML =
-      '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-
-    const status = document.getElementById("filterStatus").value;
-    const category = document.getElementById("filterCategory").value;
-
-    if (status === "ACTIVE") {
-      const response = await modFetch("/moderator/reports");
-      const data = await response.json();
-
-      const reports = Array.isArray(data)
-        ? data
-        : (data.reports || []);
-
-      allReports = reports;
-
-      let filtered = reports.filter(
-        r =>
-          r.status === "SUBMITTED" ||
-          r.status === "UNDER_REVIEW"
-      );
-
-      if (category) {
-        filtered = filtered.filter(
-          r => r.category === category
-        );
-      }
-
-      cachedReports = filtered;
-
-      renderModList(filtered, allReports);
-
-      return;
-    }
-
-    const params = new URLSearchParams();
-
-    // Only category goes to backend.
-    // We handle status filtering here so we always have ALL reports
-    // available for the statistics.
-    if (category) {
-      params.set("category", category);
-    }
-
-    try {
-      const response = await modFetch(
-        "/moderator/reports" +
-        (params.toString() ? "?" + params.toString() : "")
-      );
-
-      if (!response.ok){
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to load reports.");
-      }
-
-      const data = await response.json();
-
-      const reports = Array.isArray(data)
-        ? data
-        : (data?.reports || []);
-
-      // Keep ALL reports for statistics
-      allReports = reports;
-
-      // Decide what cards to display
-      let displayReports;
-
-      if (status === "ACTIVE") {
-        displayReports = reports.filter(
-          r =>
-            r.status === "SUBMITTED" ||
-            r.status === "UNDER_REVIEW"
-        );
-      } else if (status) {
-        displayReports = reports.filter(
-          r => r.status === status
-        );
-      } else {
-        displayReports = reports.filter(
-          r =>
-            r.status === "SUBMITTED" ||
-            r.status === "UNDER_REVIEW"
-        );
-      }
-
-      // Keep the displayed reports available to open
-      cachedReports = displayReports;
-
-      renderModList(displayReports, allReports);
-
-    } catch (error) {
-      if (
-        error.message === "Not signed in." ||
-        error.message === "Session expired."
-      ) return;
-
-      list.innerHTML =
-        `<div class="empty" style="color:var(--danger)">
-          ${escapeHtml(friendlyError(error))}
-        </div>`;
-    }
-  }
-
-  function renderModList(payload, statsSource = null){
-    const modCount = document.getElementById("modCount");
-    const list = document.getElementById("modList");
-
-    const reports = Array.isArray(payload)
-      ? payload
-      : (payload?.reports || []);
-
-    cachedReports = reports;
-
-    const statsReports = statsSource || reports;
-
-    const submitted = statsReports.filter(
-      r => r.status === "SUBMITTED"
-    ).length;
-
-    const underReview = statsReports.filter(
-      r => r.status === "UNDER_REVIEW"
-    ).length;
-
-    const resolved = statsReports.filter(
-      r => r.status === "RESOLVED"
-    ).length;
-
-    const dismissed = statsReports.filter(
-      r => r.status === "DISMISSED"
-    ).length;
-
-    const activeCount = submitted + underReview;
-
-    document.getElementById("statTotal").textContent = activeCount;
-    document.getElementById("statSubmitted").textContent = submitted;
-    document.getElementById("statUnderReview").textContent = underReview;
-    document.getElementById("statResolved").textContent = resolved;
-    document.getElementById("statDismissed").textContent = dismissed;
-
-    list.innerHTML = "";
-
-    if (!reports.length){
-      list.innerHTML =
-        '<div class="empty">No reports match these filters.</div>';
-      return;
-    }
-
-    const sortType =
-      document.getElementById("sortReports")?.value || "newest";
-
-    const sorted = [...reports].sort((a, b) => {
-      if (sortType === "oldest") {
-        return new Date(a.created_at) - new Date(b.created_at);
-      }
-
-      if (sortType === "type") {
-        return (a.category || "").localeCompare(b.category || "");
-      }
-
-      return new Date(b.created_at) - new Date(a.created_at);
-    });
-    const frag = document.createDocumentFragment();
-
-    sorted.forEach(report => {
-      const row = document.createElement("div");
-      row.className = "report-row";
-      row.setAttribute("role", "button");
-      row.setAttribute("tabindex", "0");
-      row.setAttribute("aria-label", `${report.category} report, status ${STATUS_NAMES[report.status] || report.status}`);
-
-      const open = () => openModDetail(report.id);
-      row.addEventListener("click", open);
-      row.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); open(); } });
-
-      row.innerHTML = `
-        <div class="top">
-          <span class="cat">${escapeHtml(report.category || "Uncategorized")}${report.has_attachment ? " 📎" : ""}</span>
-          <span class="status-pill ${STATUS_CLASSES[report.status] || "status-submitted"}">
-            ${escapeHtml(STATUS_NAMES[report.status] || report.status || "Unknown")}
-          </span>
-        </div>
-        <div class="desc">${escapeHtml(report.description || "")}</div>
-        <small style="color:var(--muted)">${escapeHtml(formatDate(report.created_at) || "Date unavailable")}</small>
-      `;
-
-      frag.appendChild(row);
-    });
-
-    list.appendChild(frag);
-  }
-
-  function sortModReports(){
-    renderModList(cachedReports, allReports);
-  }
-
-  function showDetailMessage(text, kind = "error"){
-    let msg = document.getElementById("modDetailMessage");
-    if (!msg){
-      msg = document.createElement("div");
-      msg.id = "modDetailMessage";
-      msg.className = "message";
-      document.getElementById("modDetail").prepend(msg);
-    }
-    showMessage(msg, text, kind);
-  }
-
-  async function openModDetail(reportId) {
-  const report = cachedReports.find(
-    r => r.id === reportId
-  );
-
-  if (!report) {
-    showDetailMessage(
-      "That report couldn't be found — try refreshing the dashboard."
-    );
-    return;
-  }
+  showMessage(msg, text, kind);
+}
+
+async function openModDetail(reportId){
+  const report = allReports.find(r => r.id === reportId);
+  if (!report) return showDetailMessage("That report couldn't be found — try refreshing the dashboard.");
 
   activeModId = report.id;
-
-  document.getElementById("modDashboard").style.display = "none";
-  document.getElementById("modDetail").style.display = "block";
-
+  $("modDashboard").style.display = "none";
+  $("modDetail").style.display = "block";
   showDetailMessage("");
 
-  document.getElementById("modCategory").textContent =
-    report.category || "Uncategorized";
+  $("modCategory").textContent = report.category || "Uncategorized";
+  $("modCode").textContent = `Report #${report.id}`;
+  $("modStatus").textContent = statusName(report.status);
+  $("modStatus").className = "status-pill " + statusClass(report.status);
+  $("modDesc").textContent = report.description || "";
+  $("modStatusSelect").value = report.status;
+  $("clearReportBtn").style.display = report.status === "SUBMITTED" || report.status === "DISMISSED" ? "inline-block" : "none";
 
-  document.getElementById("modCode").textContent =
-    `Report #${report.id}`;
+  const thread = $("modThread");
+  renderThread(thread, report.status_updates || report.updates, report.replies, "From Reporter");
 
-  document.getElementById("modStatus").textContent =
-    STATUS_NAMES[report.status] || report.status;
-
-  document.getElementById("modStatus").className =
-    "status-pill " +
-    (STATUS_CLASSES[report.status] || "status-submitted");
-
-  document.getElementById("modDesc").textContent =
-    report.description || "";
-
-  document.getElementById("modStatusSelect").value =
-    report.status;
-
-  const clearBtn = document.getElementById("clearReportBtn");
-
-  if (clearBtn) {
-    clearBtn.style.display =
-      report.status === "SUBMITTED" || report.status === "DISMISSED"
-        ? "inline-block"
-        : "none";
+  if (report.has_attachment){
+    const b = el("button", report.attachment_name ? `Download attachment (${report.attachment_name})` : "Download attachment", "copy-btn", "display:block;margin-top:10px");
+    b.type = "button";
+    b.onclick = () => download(`/moderator/reports/${encodeURIComponent(report.id)}/attachment`, b, "attachment");
+    thread.appendChild(b);
   }
-
-  const thread =
-    document.getElementById("modThread");
-
-  thread.innerHTML = "";
-
-  renderModeratorThread(
-    thread,
-    report.status_updates || report.updates,
-    report.replies || []
-  );
-
-  if (report.has_attachment) {
-    const evidence =
-      document.createElement("button");
-
-    evidence.type = "button";
-
-    evidence.textContent =
-      report.attachment_name
-        ? `Download attachment (${report.attachment_name})`
-        : "Download attachment";
-
-    evidence.className = "copy-btn";
-
-    evidence.style.cssText =
-      "display:inline-block;margin-top:10px";
-
-    evidence.onclick = () =>
-      downloadAttachment(
-        report.id,
-        evidence
-      );
-
-    thread.appendChild(evidence);
-  }
-
-  if (
-    report.evidence_url &&
-    isSafeHttpUrl(report.evidence_url)
-  ) {
-    const link =
-      document.createElement("a");
-
-    link.href = report.evidence_url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-
-    link.textContent =
-      "View evidence link";
-
-    link.style.cssText =
-      "display:inline-block;margin-top:10px;color:var(--accent-2)";
-
-    thread.appendChild(link);
+  if (report.evidence_url && isSafeHttpUrl(report.evidence_url)){
+    const a = el("a", "View evidence link", "", "display:inline-block;margin-top:10px;color:var(--accent-2)");
+    a.href = report.evidence_url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    thread.appendChild(a);
   }
 
   try {
-    const response = await modFetch(
-      `/moderator/reports/${encodeURIComponent(report.id)}/evidence`
-    );
-
-    if (!response.ok) return;
-
-    const evidenceList =
-      await response.json();
-
-    if (evidenceList.length) {
-      const heading =
-        document.createElement("div");
-
-      heading.textContent =
-        "Additional evidence";
-
-      heading.style.cssText =
-        "margin-top:18px;font-weight:700;";
-
-      thread.appendChild(heading);
-
-      evidenceList.forEach((evidence) => {
-        const button =
-          document.createElement("button");
-
-        button.type = "button";
-        button.className = "copy-btn";
-
-        button.textContent =
-          `Download ${evidence.file_name}`;
-
-        button.style.cssText =
-          "display:block;margin-top:8px";
-
-        button.onclick = () =>
-          downloadReporterEvidence(
-            report.id,
-            evidence.id,
-            button
-          );
-
-        thread.appendChild(button);
-      });
-    }
-
-  } catch (error) {
-    console.error(
-      "Failed to load additional evidence:",
-      error
-    );
+    const res = await modFetch(`/moderator/reports/${encodeURIComponent(report.id)}/evidence`);
+    if (!res.ok) return;
+    const items = await res.json();
+    if (!items.length) return;
+    thread.appendChild(el("h4", "Additional evidence", "", "margin-top:12px"));
+    items.forEach(ev => {
+      const b = el("button", `Download ${ev.file_name}`, "copy-btn", "display:block;margin-top:8px");
+      b.type = "button";
+      b.onclick = () => download(`/moderator/reports/${encodeURIComponent(report.id)}/evidence/${encodeURIComponent(ev.id)}`, b, "evidence");
+      thread.appendChild(b);
+    });
+  } catch (err) {
+    if (!isAuthError(err)) console.error("Failed to load additional evidence:", err);
   }
 }
 
-  async function downloadAttachment(reportId, btn){
-    const originalText = btn ? btn.textContent : "";
-    try {
-      if (btn){ btn.disabled = true; btn.textContent = "Downloading…"; }
-      const response = await modFetch(`/moderator/reports/${encodeURIComponent(reportId)}/attachment`);
-      if (!response.ok){
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to download attachment.");
-      }
-      const blob = await response.blob();
-      const disposition = response.headers.get("content-disposition") || "";
-      const match = disposition.match(/filename="?([^";]+)"?/i);
-      const filename = match ? match[1] : "attachment";
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch (error) {
-      if (error.message === "Not signed in." || error.message === "Session expired.") return;
-      showDetailMessage(friendlyError(error));
-    } finally {
-      if (btn){ btn.disabled = false; btn.textContent = originalText; }
-    }
+async function download(url, btn, fallbackName){
+  const original = btn.textContent;
+  try {
+    btn.disabled = true; btn.textContent = "Downloading…";
+    const res = await modFetch(url);
+    if (!res.ok) throw new Error((await json(res)).error || `Failed to download ${fallbackName}.`);
+    saveBlob(await res.blob(), res, fallbackName);
+  } catch (err) {
+    if (!isAuthError(err)) showDetailMessage(friendlyError(err));
+  } finally {
+    btn.disabled = false; btn.textContent = original;
   }
+}
 
-  async function downloadReporterEvidence(reportId, evidenceId, btn) {
-    const originalText = btn.textContent;
+function closeModDetail(){
+  $("modDetail").style.display = "none";
+  $("modDashboard").style.display = "block";
+  loadReports();
+}
 
-    try {
-      btn.disabled = true;
-      btn.textContent = "Downloading...";
-
-      const response = await modFetch(
-        `/moderator/reports/${encodeURIComponent(reportId)}/evidence/${encodeURIComponent(evidenceId)}`
-      );
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(
-          data.error || "Failed to download evidence."
-        );
-      }
-
-      const blob = await response.blob();
-
-      const disposition =
-        response.headers.get("content-disposition") || "";
-
-      const match =
-        disposition.match(/filename="?([^";]+)"?/i);
-
-      const filename =
-        match ? match[1] : "evidence";
-
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-    } catch (error) {
-      if (
-        error.message === "Not signed in." ||
-        error.message === "Session expired."
-      ) {
-        return;
-      }
-
-      showDetailMessage(friendlyError(error));
-    } finally {
-      btn.disabled = false;
-      btn.textContent = originalText;
-    }
+async function modSave(){
+  if (!activeModId) return;
+  const btn = $("modSaveBtn");
+  const status = $("modStatusSelect").value, message = $("modReply").value.trim();
+  setButtonLoading(btn, true, "Saving...", "Save update");
+  showDetailMessage("");
+  try {
+    const res = await modFetch(`/moderator/reports/${encodeURIComponent(activeModId)}/status`, {
+      method:"PATCH", headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ status, message:message || undefined })
+    });
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to update report status.");
+    $("modReply").value = "";
+    await loadReports();
+    await openModDetail(activeModId);
+    showDetailMessage("Update saved.", "success");
+  } catch (err) {
+    if (!isAuthError(err)) showDetailMessage(friendlyError(err));
+  } finally {
+    setButtonLoading(btn, false, "", "Save update");
   }
+}
 
-  function closeModDetail(){
-    document.getElementById("modDetail").style.display = "none";
-    document.getElementById("modDashboard").style.display = "block";
-    reloadModList();
+/* ---------- delete ---------- */
+const openDeleteConfirm = () => $("deleteModal").style.display = "flex";
+const closeDeleteConfirm = () => $("deleteModal").style.display = "none";
+
+async function deleteReport(){
+  if (!activeModId) return;
+  closeDeleteConfirm();
+  const btn = $("clearReportBtn");
+  btn.disabled = true; btn.textContent = "Deleting...";
+  try {
+    const res = await modFetch(`/moderator/reports/${encodeURIComponent(activeModId)}`, { method:"DELETE" });
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to delete report.");
+    activeModId = null;
+    closeModDetail();
+  } catch (err) {
+    if (!isAuthError(err)) showDetailMessage(friendlyError(err));
+  } finally {
+    btn.disabled = false; btn.textContent = "Clear report";
   }
+}
 
-  function confirmDeleteReport() {
-    const modal = document.getElementById("deleteConfirmModal");
-
-    if (!modal) return;
-
-    modal.style.display = "flex";
+/* ---------- evidence requests ---------- */
+async function setEvidenceAccess(enabled, message){
+  const out = $("evidenceAccessMessage");
+  try {
+    const res = await modFetch(`/moderator/reports/${encodeURIComponent(activeModId)}/evidence-access`, {
+      method:"PATCH", headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify(enabled ? { enabled, message } : { enabled })
+    });
+    const data = await json(res);
+    if (!res.ok) throw new Error(data.error || "Failed to update evidence access.");
+    return true;
+  } catch (err) {
+    if (!isAuthError(err)) showMessage(out, friendlyError(err), "error");
+    return false;
   }
-
-  function closeDeleteConfirm() {
-    const modal = document.getElementById("deleteConfirmModal");
-
-    if (!modal) return;
-
-    modal.style.display = "none";
+}
+async function requestEvidence(){
+  if (!activeModId) return;
+  const input = $("evidenceRequestMessage"), message = input.value.trim();
+  if (!message) return showMessage($("evidenceAccessMessage"), "Please enter what evidence you want from the reporter.", "error");
+  if (await setEvidenceAccess(true, message)){
+    input.value = "";
+    showMessage($("evidenceAccessMessage"), "Evidence request sent. Upload is now enabled.", "success");
   }
+}
+async function disableEvidenceUpload(){
+  if (!activeModId) return;
+  if (await setEvidenceAccess(false)) showMessage($("evidenceAccessMessage"), "Evidence upload disabled.", "success");
+}
 
-  async function deleteReport() {
-    if (!activeModId) return;
-
-    closeDeleteConfirm();
-
-    const btn = document.getElementById("clearReportBtn");
-
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Deleting...";
-    }
-
-    try {
-      const response = await modFetch(
-        `/moderator/reports/${encodeURIComponent(activeModId)}`,
-        {
-          method: "DELETE"
-        }
-      );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to delete report.");
-      }
-
-      activeModId = null;
-
-      document.getElementById("modDetail").style.display = "none";
-      document.getElementById("modDashboard").style.display = "block";
-
-      await reloadModList();
-
-    } catch (error) {
-      showMessage(
-        document.getElementById("modMessage"),
-        friendlyError(error),
-        "error"
-      );
-
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = "Clear report";
-      }
-    }
-  }
-
-  document.addEventListener("keydown", (e) => {
-    const detail = document.getElementById("modDetail");
-    if (e.key === "Escape" && detail && detail.style.display !== "none") closeModDetail();
-  });
-
-  async function modSave(){
-    const status = document.getElementById("modStatusSelect").value;
-    const message = document.getElementById("modReply").value.trim();
-    const btn = document.getElementById("modSaveBtn");
-
-    if (!activeModId) return;
-
-    setButtonLoading(btn, true, "Saving...", "Save update");
-    showDetailMessage("");
-
-    try {
-      const response = await modFetch(`/moderator/reports/${encodeURIComponent(activeModId)}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, message: message || undefined })
-      });
-
-      let data = {};
-      try { data = await response.json(); } catch {}
-
-      if (!response.ok) throw new Error(data.error || "Failed to update report status.");
-
-      document.getElementById("modReply").value = "";
-      showDetailMessage("Update saved.", "success");
-      await reloadModList();
-      openModDetail(activeModId);
-    } catch (error) {
-      if (error.message === "Not signed in." || error.message === "Session expired.") return;
-      showDetailMessage(friendlyError(error));
-    } finally {
-      setButtonLoading(btn, false, "", "Save update");
-    }
-  }
-
-  async function requestEvidence() {
-    if (!activeModId) {
-      alert("No report selected");
-      return;
-    }
-
-    const input =
-      document.getElementById("evidenceRequestMessage");
-
-    const message = input.value.trim();
-
-    if (!message) {
-      showMessage(
-        document.getElementById("evidenceAccessMessage"),
-        "Please enter what evidence you want from the reporter.",
-        "error"
-      );
-      return;
-    }
-
-    try {
-      const response = await modFetch(
-        `/moderator/reports/${encodeURIComponent(activeModId)}/evidence-access`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            enabled: true,
-            message
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Failed to request evidence"
-        );
-      }
-
-      input.value = "";
-
-      showMessage(
-        document.getElementById("evidenceAccessMessage"),
-        "Evidence request sent. Upload is now enabled.",
-        "success"
-      );
-
-    } catch (error) {
-      showMessage(
-        document.getElementById("evidenceAccessMessage"),
-        error.message,
-        "error"
-      );
-    }
-  }
-
-  async function disableEvidenceUpload() {
-    if (!activeModId) return;
-
-    try {
-      const response = await modFetch(
-        `/moderator/reports/${encodeURIComponent(activeModId)}/evidence-access`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            enabled: false
-          })
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Failed to disable upload"
-        );
-      }
-
-      showMessage(
-        document.getElementById("evidenceAccessMessage"),
-        "Evidence upload disabled.",
-        "success"
-      );
-
-    } catch (error) {
-      showMessage(
-        document.getElementById("evidenceAccessMessage"),
-        error.message,
-        "error"
-      );
-    }
-  }
-
-  async function uploadReporterEvidence() {
-    const code =
-      document.getElementById("trackCode").value.trim();
-
-    const input =
-      document.getElementById("reporterEvidenceInput");
-
-    const message =
-      document.getElementById("reporterEvidenceMessage");
-
-    const btn =
-      document.getElementById("reporterEvidenceBtn");
-
-    const file =
-      input.files && input.files[0];
-
-    if (!file) {
-      showMessage(
-        message,
-        "Please choose a file.",
-        "error"
-      );
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      showMessage(
-        message,
-        "File must be 10 MB or smaller.",
-        "error"
-      );
-      return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("evidence", file);
-
-    btn.disabled = true;
-    btn.textContent = "Uploading...";
-
-    try {
-      const response = await fetch(
-        `/reports/${encodeURIComponent(code)}/evidence`,
-        {
-          method: "POST",
-          body: formData
-        }
-      );
-
-      const data =
-        await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Failed to upload evidence."
-        );
-      }
-
-      showMessage(
-        message,
-        "Evidence uploaded successfully.",
-        "success"
-      );
-
-      input.value = "";
-
-      await lookupCase();
-
-    } catch (error) {
-      showMessage(
-        message,
-        error.message,
-        "error"
-      );
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Upload evidence";
-    }
-  }
+/* ---------- keyboard ---------- */
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if ($("deleteModal").style.display === "flex") closeDeleteConfirm();
+  else if ($("modDetail").style.display === "block") closeModDetail();
+});
 </script>
-
-<div id="deleteConfirmModal" style="
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  z-index:9999;
-  align-items:center;
-  justify-content:center;
-">
-  <div style="
-    width:min(420px,90%);
-    background:#151515;
-    border:1px solid #333;
-    border-radius:12px;
-    padding:24px;
-    box-shadow:0 20px 60px rgba(0,0,0,.5);
-  ">
-    <h3 style="margin:0 0 10px;">
-      Delete report?
-    </h3>
-
-    <p style="color:var(--muted);line-height:1.5;margin-bottom:20px;">
-      Are you sure you want to delete this report?
-      This action cannot be undone.
-    </p>
-
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button
-        type="button"
-        class="secondary"
-        onclick="closeDeleteConfirm()"
-      >
-        Cancel
-      </button>
-
-      <button
-        type="button"
-        class="primary"
-        onclick="deleteReport()"
-        style="background:#d93636;border-color:#d93636;"
-      >
-        Delete report
-      </button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
