@@ -995,7 +995,7 @@ async function openModDetail(reportId){
   $("modStatus").className = "status-pill " + statusClass(report.status);
   $("modDesc").textContent = report.description || "";
   $("modStatusSelect").value = report.status;
-  $("clearReportBtn").style.display = report.status === "SUBMITTED" || report.status === "DISMISSED" ? "inline-block" : "none";
+  $("clearReportBtn").style.display = report.status === "RESOLVED" || report.status === "DISMISSED" ? "inline-block" : "none";
 
   const thread = $("modThread");
   renderThread(thread, report.status_updates || report.updates, report.replies, "From Reporter");
