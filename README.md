@@ -114,7 +114,7 @@ Create a `.env` file in the project root:
 
 ```env
 PORT=3000
-MODERATOR_KEY=your-secret-key
+MODERATOR_KEY=im7
 ```
 
 Start the server:
