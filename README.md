@@ -1,229 +1,258 @@
-# WhistleDrop
+# WhistleDrop: Speak Without Being Seen
 
-### Anonymous Reporting & Case Tracking Platform
+An anonymous reporting backend. Anyone can submit a report without an account, track it with a private case code, and communicate with moderators, who can manage reports but can never see who sent them.
 
-WhistleDrop is an anonymous reporting platform that allows users to securely submit concerns, track their reports using a private case code, and communicate with moderators without creating an account.
+**Live demo:** https://YOUR-APP.onrender.com
+**Health check:** https://YOUR-APP.onrender.com/health
+
+> Hosted on Render's free tier. The service sleeps after ~15 minutes of inactivity, so the first request may take 30-60 seconds. Data and uploads may reset on restart or redeploy.
+
+---
 
 ## Features
 
-- 🕵️ **Anonymous reporting** — Submit reports without creating an account.
-- 🔐 **Private case codes** — Each report receives a unique case code for tracking.
-- 📋 **Report tracking** — Check the current status of a submitted report.
-- 💬 **Moderator communication** — Moderators can send updates and respond to reporters.
-- 📎 **Evidence attachments** — Reports can include supporting attachments.
-- 📤 **Additional evidence requests** — Moderators can request additional attachments from reporters.
-- 🛡️ **Moderator dashboard** — Review, filter, and manage submitted reports.
-- 📱 **Responsive interface** — Designed for both desktop and mobile devices.
-- 🔒 **No reporter identity stored** — Reports are not associated with a user account.
-
-## Report Lifecycle
-
-A report can move through the following states:
-
-```text
-Submitted
-    ↓
-Under Review
-    ↓
-Resolved / Dismissed
-```
-
-Moderators can communicate with reporters during the review process and request additional attachments when necessary.
+- Anonymous report submission (no account, no email, no name)
+- Hard-to-guess case code for tracking
+- Status workflow: `SUBMITTED → UNDER_REVIEW → RESOLVED / DISMISSED`
+- Moderator access protected by a secret key
+- Filter reports by status and category
+- Moderator status updates, notes and replies
+- Evidence upload and attachment requests
+- Input validation and consistent error responses
+- Fully testable with Postman or cURL; no frontend required
 
 ## Tech Stack
 
-### Backend
+Node.js, Express, SQLite (`better-sqlite3`), Multer (uploads), dotenv. Deployed on Render.
 
-- Node.js
-- Express.js
-- SQLite
-- better-sqlite3
-- bcrypt
-- Multer
-- dotenv
+---
 
-### Frontend
-
-- HTML
-- CSS
-- JavaScript
-
-### Deployment
-
-- Render
-- GitHub
-
-## Project Structure
-
-```text
-whistledrop-backend/
-│
-├── public/
-│   └── index.html
-│
-├── src/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   └── routes/
-│
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── README.md
-└── server.js
-```
-
-## How It Works
-
-### 1. Submit a Report
-
-The reporter selects a category, provides a description, and can optionally attach supporting evidence.
-
-The server generates a unique case code for the report.
-
-The case code is stored securely using a hash rather than storing the original code directly.
-
-### 2. Track a Report
-
-The reporter keeps their case code and uses it to retrieve their report later.
-
-The server verifies the supplied case code against the stored hash and returns the report's current status and relevant communication.
-
-### 3. Moderator Review
-
-Authorized moderators can access the moderator dashboard to:
-
-- View reports
-- Filter reports by status and category
-- Review report details
-- Update report status
-- Send notes/replies
-- Request additional attachments
-- Review submitted evidence
-
-### 4. Resolution
-
-Reports can eventually be marked as:
-
-- **Resolved**
-- **Dismissed**
-
-The reporter can see the updated status when they use their case code.
-
-## API
-
-### Reports
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `POST` | `/reports` | Submit a new report |
-| `GET` | `/reports/:caseCode` | Track a report |
-| `POST` | `/reports/:caseCode/evidence` | Upload additional evidence |
-| `POST` | `/reports/:caseCode/reply` | Send a reporter reply |
-
-### Moderator
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `GET` | `/moderator/reports` | Retrieve reports |
-| `PATCH` | `/moderator/reports/:id/status` | Update report status |
-
-### Health Check
-
-```http
-GET /health
-```
-
-Returns:
-
-```json
-{
-  "status": "ok"
-}
-```
-
-## Running Locally
-
-### 1. Clone the repository
+## Setup
 
 ```bash
-git clone <your-repository-url>
+git clone <repository-url>
 cd whistledrop-backend
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 PORT=3000
-MODERATOR_KEY=your-moderator-key
+MODERATOR_KEY=choose-a-long-random-secret
 ```
 
-Never commit `.env` to GitHub.
-
-### 4. Start the server
-
-Development:
-
-```bash
-npm run dev
-```
-
-Production:
+Run:
 
 ```bash
 npm start
 ```
 
-The application will be available at:
+The server runs at `http://localhost:3000`. Never commit `.env`.
 
-```text
-http://localhost:3000
+### Environment variables
+
+| Variable | Description |
+|---|---|
+| `PORT` | Port the server listens on (default `3000`) |
+| `MODERATOR_KEY` | Secret that grants moderator access |
+
+---
+
+## Report Workflow
+
+```
+SUBMITTED → UNDER_REVIEW → RESOLVED
+                         ↘ DISMISSED
 ```
 
-## Security & Privacy
+Only valid forward transitions are accepted. Skipping a step or changing a closed report returns `400`.
 
-WhistleDrop is designed around anonymous reporting.
+**Categories:** `Security`, `Harassment`, `Corruption`, `Technical`, `Other`
 
-- No reporter account is required.
-- Reports are not linked to a user ID.
-- Case codes are hashed before being stored.
-- Moderator access requires authentication.
-- Environment secrets are kept outside the repository.
-- Evidence uploads are handled separately from report metadata.
+---
 
-> Users should keep their case code private because it is required to access their report.
+## API Endpoints
 
-## Deployment
+### Public (reporter)
 
-The application can be deployed as a Node.js web service on Render.
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/reports` | Submit an anonymous report; returns a case code |
+| GET | `/reports/:caseCode` | Track status, updates and moderator replies |
+| POST | `/reports/:caseCode/evidence` | Upload additional evidence |
+| POST | `/reports/:caseCode/reply` | Send a reply to moderators |
+| GET | `/health` | Service health check |
 
-Typical deployment configuration:
+### Moderator (requires moderator key)
 
-```text
-Build Command:
-npm install
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/moderator/reports` | List reports (filter with `?status=` and `?category=`) |
+| GET | `/moderator/reports/:id` | View one report |
+| PATCH | `/moderator/reports/:id/status` | Change status and optionally add a status update |
 
-Start Command:
-npm start
+Moderators authenticate by sending the key in a request header:
+
+```
+x-moderator-key: <MODERATOR_KEY>
 ```
 
-Environment variables such as `MODERATOR_KEY` should be configured through the hosting provider rather than committed to the repository.
+---
 
-## Status
+## Testing the API
 
-🚀 **Deployed and actively developed**
+This is a backend-only project. Test it with Postman, cURL, or any HTTP client against the live URL or `http://localhost:3000`. Suggested order:
+
+1. `POST /reports` and save the returned `caseCode`
+2. `GET /reports/:caseCode` to see the `SUBMITTED` status
+3. `GET /moderator/reports` with the moderator key
+4. `PATCH /moderator/reports/:id/status` to move the report forward
+5. `GET /reports/:caseCode` again to see the update
+6. Try invalid requests (wrong case code, missing fields, no key) to see the error handling
+
+## Example Requests and Responses
+
+### 1. Submit a report
+
+```bash
+curl -X POST http://localhost:3000/reports \
+  -H "Content-Type: application/json" \
+  -d '{
+    "category": "Security",
+    "description": "Admin panel is accessible without a password.",
+    "evidenceUrl": "https://example.com/screenshot.png"
+  }'
+```
+
+`201 Created`
+
+```json
+{
+  "message": "Report submitted. Save your case code; it cannot be recovered.",
+  "caseCode": "WD-7K2M-Q9XA-4TPE",
+  "status": "SUBMITTED"
+}
+```
+
+### 2. Track a report
+
+```bash
+curl http://localhost:3000/reports/WD-7K2M-Q9XA-4TPE
+```
+
+`200 OK`
+
+```json
+{
+  "category": "Security",
+  "status": "UNDER_REVIEW",
+  "updates": [
+    { "message": "We are looking into this.", "createdAt": "2026-10-02T10:15:00Z" }
+  ]
+}
+```
+
+### 3. Moderator: list and filter reports
+
+```bash
+curl "http://localhost:3000/moderator/reports?status=SUBMITTED&category=Security" \
+  -H "x-moderator-key: YOUR_KEY"
+```
+
+`200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "category": "Security",
+    "description": "Admin panel is accessible without a password.",
+    "status": "SUBMITTED",
+    "createdAt": "2026-10-02T09:49:00Z"
+  }
+]
+```
+
+Note: no reporter information appears anywhere in this response.
+
+### 4. Moderator: update status
+
+```bash
+curl -X PATCH http://localhost:3000/moderator/reports/1/status \
+  -H "x-moderator-key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "UNDER_REVIEW", "update": "We are looking into this." }'
+```
+
+`200 OK`
+
+```json
+{ "id": 1, "status": "UNDER_REVIEW" }
+```
+
+### 5. Error examples
+
+| Request | Response |
+|---|---|
+| Missing `description` on submit | `400` `{ "error": "description is required" }` |
+| Unknown category | `400` `{ "error": "Invalid category" }` |
+| Unknown case code | `404` `{ "error": "Report not found" }` |
+| Moderator route without key | `401` `{ "error": "Unauthorized" }` |
+| Moderator route with wrong key | `403` `{ "error": "Forbidden" }` |
+| Invalid status change (e.g. `SUBMITTED → RESOLVED`) | `400` `{ "error": "Invalid status transition" }` |
+
+---
+
+## How Anonymity Is Maintained
+
+- **No identity is collected.** There are no accounts, and the report form has no name or email fields.
+- **No reporter identifiers are stored.** Reports contain only category, description, optional evidence, status and timestamps. IP addresses and user agents are not saved with reports.
+- **Moderators and the API never receive reporter data.** Response shapes contain no identity fields because none exist in the database.
+- **Case codes are random, not derived from anything.** They are generated with a cryptographically secure random generator, have enough entropy to resist guessing, and are not sequential.
+- **Case codes are stored hashed**, so a database leak does not expose working codes.
+- **The case code is the only link back to a report.** It is shown once; whoever holds it can track the report, so the reporter must keep it private.
+
+---
+
+## Design Decisions and Assumptions
+
+- **Case code instead of accounts.** It gives reporters ongoing access without any identity, which is the core requirement.
+- **Shared moderator key.** A single secret key protects moderator routes. This keeps the system simple for the scope of the project; a production system would use per-moderator accounts with roles and audit logs.
+- **Strict status workflow.** Transitions are validated server-side so a report cannot skip review or be reopened after closing.
+- **SQLite for storage.** Chosen for zero-setup local development. On Render's free tier the disk is ephemeral, so data resets on restart; a hosted database would be used in production.
+- **Moderator replies are visible to reporters** through the case code, since this is the only communication channel.
+- **Assumption:** reporters can lose their case code, and it cannot be recovered. Recovery would require identity, which defeats the purpose.
+- **Assumption:** evidence files may contain identifying metadata. Reporters are advised to strip metadata before uploading, and uploads are restricted by type and size.
+
+---
+
+## Limitations
+
+- Free-tier hosting: cold starts and non-persistent data and uploads.
+- A shared moderator key is not suitable for large teams.
+- Anonymity depends on the reporter's own behavior (network, file metadata, writing style).
+
+---
+
+## Project Structure
+
+```
+whistledrop-backend/
+├── public/            # optional demo page (not required to use the API)
+├── src/
+│   ├── controllers/   # report and moderator logic
+│   ├── middleware/    # auth, error handler, uploads
+│   ├── models/        # database models
+│   └── routes/        # reports and moderator routes
+├── database.js
+├── server.js
+├── package.json
+└── README.md
+```
 
 ---
 
 ## License
 
-This project is currently intended for educational and demonstration purposes.
+Built for educational and demonstration purposes.

@@ -113,10 +113,27 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .primary.danger{background:#d93636;border-color:#d93636;color:#fff;box-shadow:none}
 .secondary,.copy-btn{padding:10px 14px;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
 .secondary.danger{color:#ff6b6b;border-color:#ff6b6b}
+.action-bar{display:flex;align-items:stretch;gap:16px;margin-top:4px}
+.action-bar .primary{flex:1;width:auto}
+.clear-btn{flex:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 22px;
+  border:2px dashed rgba(255,68,56,.55);background:rgba(255,68,56,.06);color:#ff6b6b;
+  font:800 12.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;transition:.15s}
+.clear-btn:hover{border-style:solid;border-color:var(--danger);background:var(--danger);color:#fff;box-shadow:4px 4px 0 rgba(255,68,56,.25)}
+@media(max-width:700px){
+  .action-bar{flex-direction:column;gap:12px}
+  .clear-btn{min-height:44px}
+}
 .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(10,10,8,.25);border-top-color:var(--bg);animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row .field{flex:1;min-width:160px}
-.back-link{border:0;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.back-link{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;padding:9px 14px 9px 12px;border:2px solid var(--border);background:var(--surface-2);
+  color:var(--muted);font:800 12px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.back-link .arr{display:inline-block;font-size:14px;transition:transform .2s}
+.back-link:hover{color:var(--accent);border-color:var(--accent);box-shadow:4px 4px 0 rgba(215,255,63,.12)}
+.back-link:hover .arr{transform:translateX(-4px)}
+.back-link kbd{padding:3px 6px;border:1px solid var(--border);font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:var(--muted)}
+@media(hover:none){.back-link kbd{display:none}}
+@media(max-width:700px){.back-link{min-height:44px}}
 
 /* Messages */
 .message{display:none;margin-top:16px;padding:13px 14px;border:2px solid var(--border);font:12.5px/1.5 var(--mono)}
@@ -133,6 +150,24 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .status-pill{display:inline-block;position:relative;font:800 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 12px 6px 22px;border:2px solid currentColor;white-space:nowrap}
 .status-pill::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
 .st-submitted{color:var(--st-submitted)}.st-review{color:var(--st-review)}.st-resolved{color:var(--st-resolved)}.st-dismissed{color:var(--st-dismissed)}
+.track-bar{display:flex;align-items:center;gap:18px;margin:8px 0 16px}
+.track-gap{flex:1;min-width:30px;border-top:2px dashed var(--border)}
+.track-note{--c:var(--accent);position:relative;padding:11px 20px 11px 22px;background:var(--surface-2);border:2px solid var(--border);border-radius:2px;
+  box-shadow:5px 5px 0 rgba(215,255,63,.1);animation:noteIn .45s cubic-bezier(.2,.9,.3,1.2) both}
+.track-note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+.track-note .dot{background:var(--c);box-shadow:0 0 10px var(--c)}
+.tn-body small{display:flex;align-items:center;gap:8px;margin-bottom:7px;font:800 10px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.tn-body b{display:block;font:700 14px/1.25 var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--text)}
+.track-note[data-s=SUBMITTED]{--c:var(--st-submitted)}
+.track-note[data-s=UNDER_REVIEW]{--c:var(--st-review)}
+.track-note[data-s=RESOLVED]{--c:var(--st-resolved)}
+.track-note[data-s=DISMISSED]{--c:var(--st-dismissed)}
+@keyframes noteIn{from{opacity:0;transform:translateX(18px)}}
+@media(max-width:700px){
+  .track-bar{flex-wrap:wrap}
+  .track-gap{display:none}
+  .track-bar .secondary,.track-note{width:100%}
+}
 
 /* Threads */
 .thread{margin-top:18px;display:flex;flex-direction:column;gap:10px;max-height:320px;overflow-y:auto;padding-right:4px}
@@ -255,6 +290,36 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;bac
   .modal{padding:20px}
 }
 @media(max-width:380px){.logo-line{font-size:30px}.nav-btn{font-size:11px}}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:200;max-width:min(92vw,420px);padding:13px 20px;
+  border:2px solid var(--st-resolved);background:#0b0f0c;color:#9dffcf;font:700 12.5px/1.5 var(--mono);box-shadow:5px 5px 0 rgba(107,255,176,.15);
+  opacity:0;transform:translate(-50%,16px);pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast::before{content:"✓  ";color:var(--st-resolved)}
+.toast.error{border-color:var(--danger);background:#120a09;color:#ff9a92;box-shadow:5px 5px 0 rgba(255,68,56,.15)}
+.toast.error::before{content:"⚠  ";color:var(--danger)}
+
+/* Case-closed stamp */
+#terminalStatus{width:150px;height:150px;padding:0;border:0;border-radius:50%;background:none;box-shadow:none;letter-spacing:0;
+  transform:rotate(-12deg);opacity:.93;
+  animation:stampIn .6s cubic-bezier(.2,.9,.3,1) both,glow 3.2s ease-in-out 1s infinite,float 5s ease-in-out 1s infinite}
+#terminalStatus svg{display:block;width:100%;height:100%;overflow:visible}
+#terminalStatus::before{content:"";position:absolute;border-radius:50%;pointer-events:none}
+#terminalStatus::before{inset:-6px;border:2px solid currentColor;opacity:0;animation:ring .9s .35s ease-out}
+#terminalStatus .dr{stroke-dasharray:1;animation:draw .9s cubic-bezier(.5,0,.2,1) both;animation-delay:var(--d,0s)}
+#terminalStatus .spin{transform-origin:100px 100px;animation:spin 32s linear infinite}
+#terminalStatus .spin.rev{animation-direction:reverse;animation-duration:22s}
+#terminalStatus .pop{transform-box:fill-box;transform-origin:center;animation:pop .45s cubic-bezier(.2,.9,.3,1.4) both;animation-delay:var(--d,.6s)}
+@keyframes stampIn{from{opacity:0;transform:rotate(-34deg) scale(2.8)}50%{opacity:.95;transform:rotate(-8deg) scale(.88)}72%{transform:rotate(-13deg) scale(1.05)}to{opacity:.93;transform:rotate(-12deg) scale(1)}}
+@keyframes ring{from{opacity:.65;transform:scale(.9)}to{opacity:0;transform:scale(1.45)}}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:scale(1.7)}to{opacity:1;transform:scale(1)}}
+@keyframes glow{0%,100%{filter:drop-shadow(0 0 5px color-mix(in srgb,currentColor 30%,transparent))}50%{filter:drop-shadow(0 0 16px color-mix(in srgb,currentColor 70%,transparent))}}
+@keyframes float{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@media(max-width:800px){#terminalStatus{position:relative;margin:16px 0 4px 6px;width:124px;height:124px}}
+@media(min-width:801px){#terminalStatus{right:15%;top:-30px}}
 </style>
 </head>
 <body>
@@ -366,10 +431,14 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <button class="primary inline" id="trackBtn" onclick="lookupCase()"><span class="btn-label">Find report</span></button>
     <div id="trackMessage" class="message" role="status"></div>
 
-    <div id="trackResult" style="display:none;margin-top:22px">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><span id="trackStatus" class="status-pill"></span></div>
-      <div id="trackLatestNote" class="muted" style="font-size:14px;line-height:1.6;margin-bottom:14px"></div>
-      <button class="secondary" id="viewReportBtn" type="button" onclick="toggleTrackDetails()">View report</button>
+    <div id="trackResult" style="display:none;margin-top:26px">
+      <div class="track-bar">
+        <button class="secondary" id="viewReportBtn" type="button" onclick="toggleTrackDetails()">View report</button>
+        <span class="track-gap" aria-hidden="true"></span>
+        <div id="trackLatestNote" class="track-note">
+          <span class="tn-body"><small><i class="dot"></i>Latest update</small><b id="trackNoteText"></b></span>
+        </div>
+      </div>
 
       <div id="trackDetails">
         <div class="report-card">
@@ -444,7 +513,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;bac
     </div>
 
     <div class="panel" id="modDetail" style="display:none">
-      <button class="back-link" onclick="closeModDetail()">← Back to dashboard</button>
+      <button class="back-link" type="button" onclick="closeModDetail()"><span class="arr" aria-hidden="true">←</span> Back to dashboard <kbd>Esc</kbd></button>
       <div class="detail-top"><strong id="modCategory"></strong><span id="modStatus" class="status-pill"></span></div>
       <p id="modCode" class="muted" style="font-family:var(--mono);font-size:12px;margin-bottom:12px"></p>
       <p id="modDesc" style="font-size:14px;line-height:1.6;margin-bottom:6px"></p>
@@ -461,8 +530,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;bac
         <label for="modReply">Status note (optional)</label>
         <textarea id="modReply" placeholder="Add a short note about this update..." style="min-height:80px"></textarea>
       </div>
-      <button class="primary" id="modSaveBtn" onclick="modSave()"><span class="btn-label">Save update</span></button>
-      <button type="button" id="clearReportBtn" class="secondary danger" onclick="openDeleteConfirm()" style="display:none;margin-top:12px">Clear report</button>
+      <div class="action-bar">
+        <button class="primary" id="modSaveBtn" onclick="modSave()"><span class="btn-label">Save update</span></button>
+        <button type="button" id="clearReportBtn" class="clear-btn" onclick="openDeleteConfirm()" style="display:none"><span aria-hidden="true">✕</span> Clear report</button>
+      </div>
 
       <div class="sub-section">
         <label for="evidenceRequestMessage">Request additional attachment</label>
@@ -695,7 +766,7 @@ function toggleTrackDetails(){
   $("viewReportBtn").textContent = show ? "Hide report" : "View report";
 }
 
-function updateTrackTimeline(status){
+function updateTrackTimeline(status, updates = []){
   const term = $("terminalStatus"), tl = $("timeline");
   const steps = [$("tSubmitted"), $("tReview"), $("tResolved")];
   const lines = tl.querySelectorAll(".t-line");
@@ -710,9 +781,44 @@ function updateTrackTimeline(status){
   if (status === "UNDER_REVIEW"){ steps[1].classList.add("current"); return; }
   if (status === "RESOLVED" || status === "DISMISSED"){
     tl.style.display = "none";
-    term.textContent = statusName(status);
+    const closed = status === "RESOLVED";
+    const last = [...updates].reverse().find(u => u.created_at);
+    const d = last && new Date(last.created_at.endsWith("Z") ? last.created_at : last.created_at + "Z");
+    const when = d && !isNaN(d) ? d.toLocaleDateString(undefined, { day:"numeric", month:"short", year:"numeric" }).toUpperCase() : "";
+    const word = statusName(status).toUpperCase();
+    const icon = closed ? "M-11 0 L-4 8 L11 -9" : "M-9 -9 L9 9 M9 -9 L-9 9";
+    term.innerHTML = `
+<svg viewBox="0 0 200 200" role="img" aria-label="${word}">
+  <defs>
+    <filter id="inkWear" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="3" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="3.5" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  9 0 0 0 -3.1" result="m"/>
+      <feComposite in="d" in2="m" operator="in"/>
+    </filter>
+    <path id="arcTop" d="M31 100 A69 69 0 0 1 169 100"/>
+    <path id="arcBot" d="M20 100 A80 80 0 0 0 180 100"/>
+  </defs>
+  <g filter="url(#inkWear)" fill="currentColor" stroke="currentColor">
+    <circle class="dr" pathLength="1" style="--d:.15s" cx="100" cy="100" r="96" fill="none" stroke-width="4.5"/>
+    <circle class="dr" pathLength="1" style="--d:.3s" cx="100" cy="100" r="89" fill="none" stroke-width="1.4"/>
+    <circle class="dr" pathLength="1" style="--d:.45s" cx="100" cy="100" r="62" fill="none" stroke-width="2"/>
+    <circle class="spin rev" cx="100" cy="100" r="57" fill="none" stroke-width="1" stroke-dasharray="1.5 4.5"/>
+    <g class="spin" stroke="none" style="font-family:var(--mono);font-weight:800">
+      <text font-size="9.5" letter-spacing="2.2" text-anchor="middle"><textPath href="#arcTop" startOffset="50%">WHISTLEDROP · CASE FILE</textPath></text>
+      <text font-size="9.5" letter-spacing="2.2" text-anchor="middle"><textPath href="#arcBot" startOffset="50%">${closed ? "CASE CLOSED · VERIFIED" : "REVIEWED · FILED"}</textPath></text>
+      <text x="25" y="104" font-size="11" text-anchor="middle">★</text>
+      <text x="175" y="104" font-size="11" text-anchor="middle">★</text>
+    </g>
+    <path class="dr" pathLength="1" style="--d:.7s" d="${icon}" transform="translate(100 74)" fill="none" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="dr" pathLength="1" style="--d:.55s" d="M46 94 H154 M46 118 H154" stroke-width="1.6" fill="none"/>
+    <text class="pop" style="--d:.65s;font-family:var(--display);font-weight:700;font-size:19px" x="100" y="112" text-anchor="middle" stroke="none" textLength="${word.length * 12.5}" lengthAdjust="spacingAndGlyphs">${word}</text>
+    ${when ? `<text class="pop" style="--d:.85s;font-family:var(--mono);font-weight:800" x="100" y="132" text-anchor="middle" stroke="none" font-size="8.5" letter-spacing="1.6">${escapeHtml(when)}</text>` : ""}
+  </g>
+</svg>`;
     term.className = status.toLowerCase();
-    term.style.display = "block";
+    term.style.display = "flex";
   }
 }
 
@@ -738,8 +844,6 @@ async function lookupCase(){
 
     const updates = data.status_updates || [];
     $("trackCategory").textContent = data.category || "Anonymous report";
-    $("trackStatus").textContent = statusName(data.status);
-    $("trackStatus").className = "status-pill " + statusClass(data.status);
     $("trackDescription").textContent = data.description || "No description provided.";
 
     const thread = $("trackThread");
@@ -749,11 +853,29 @@ async function lookupCase(){
       data.evidence.forEach(i => thread.appendChild(el("div", `📎 ${i.file_name} — submitted ${formatDate(i.created_at)}`, "muted")));
     }
 
-    const hasNote = updates.some(u => u.message);
-    $("trackLatestNote").textContent = hasNote ? "Moderator has sent you a note"
-      : data.status === "SUBMITTED" ? "Your report hasn't been picked up yet." : "Moderator is working on it.";
+    const latestNote = $("trackLatestNote");
 
-    updateTrackTimeline(data.status);
+    const notes = updates.filter(
+      u => u.message && u.message.trim()
+    );
+
+    const latestNoteId = notes.length
+      ? String(notes[notes.length - 1].id || notes[notes.length - 1].created_at)
+      : null;
+
+    const seenNoteKey = `seenModeratorNote_${code}`;
+    const seenNoteId = localStorage.getItem(seenNoteKey);
+
+    if (latestNoteId && latestNoteId !== seenNoteId) {
+      $("trackNoteText").textContent = "Moderator has sent you a note";
+      latestNote.dataset.noteId = latestNoteId;
+      latestNote.dataset.noteKey = seenNoteKey;
+      latestNote.style.display = "block";
+    } else {
+      latestNote.style.display = "none";
+    }
+
+    updateTrackTimeline(data.status, updates);
 
     const box = $("reporterEvidenceBox");
     if (data.evidence_upload_enabled && data.evidence_request){
@@ -970,14 +1092,17 @@ function renderModList(reports){
   list.appendChild(frag);
 }
 
+let toastTimer;
 function showDetailMessage(text, kind = "error"){
-  let msg = $("modDetailMessage");
-  if (!msg){
-    msg = el("div", null, "message");
-    msg.id = "modDetailMessage";
-    $("modDetail").prepend(msg);
-  }
-  showMessage(msg, text, kind);
+  let t = $("toast");
+  if (!t){ t = el("div", null, "toast"); t.id = "toast"; t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite"); document.body.appendChild(t); }
+  clearTimeout(toastTimer);
+  if (!text){ t.classList.remove("show"); return; }
+  t.textContent = text;
+  t.className = "toast " + kind;
+  void t.offsetWidth;
+  t.classList.add("show");
+  toastTimer = setTimeout(() => t.classList.remove("show"), kind === "error" ? 6000 : 3000);
 }
 
 async function openModDetail(reportId){
@@ -995,7 +1120,7 @@ async function openModDetail(reportId){
   $("modStatus").className = "status-pill " + statusClass(report.status);
   $("modDesc").textContent = report.description || "";
   $("modStatusSelect").value = report.status;
-  $("clearReportBtn").style.display = report.status === "RESOLVED" || report.status === "DISMISSED" ? "inline-block" : "none";
+  $("clearReportBtn").style.display = report.status === "RESOLVED" || report.status === "DISMISSED" ? "inline-flex" : "none";
 
   const thread = $("modThread");
   renderThread(thread, report.status_updates || report.updates, report.replies, "From Reporter");
@@ -1091,7 +1216,7 @@ async function deleteReport(){
   } catch (err) {
     if (!isAuthError(err)) showDetailMessage(friendlyError(err));
   } finally {
-    btn.disabled = false; btn.textContent = "Clear report";
+    btn.disabled = false; btn.innerHTML = '<span aria-hidden="true">✕</span> Clear report';
   }
 }
 
