@@ -6,17 +6,40 @@ Users receive a private case code that they can use to track their report, recei
 
 Moderators can review and manage reports without being given the reporter's identity.
 
-## Live Demo
+**Live demo:** https://whistledrop-g7r5.onrender.com/
+**Health check:** https://whistledrop-g7r5.onrender.com/health
+**Repository:** https://github.com/TSsanjayy/WhistleDrop
 
-Frontend / Demo:
-https://whistledrop-g7r5.onrender.com/
+> The live demo runs on Render's free tier. If it has been idle, the first request may take 30-60 seconds while the instance wakes up.
 
-Health Check:
-https://whistledrop-g7r5.onrender.com/health
+---
 
-## Repository
+## Table of Contents
 
-https://github.com/TSsanjayy/WhistleDrop
+- [How It Works](#how-it-works)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Frontend](#frontend)
+- [Setup](#setup)
+- [Report Workflow](#report-workflow)
+- [API Endpoints](#api-endpoints)
+- [Conventions](#conventions)
+- [Testing the API](#testing-the-api)
+- [Example Requests and Responses](#example-requests-and-responses)
+- [HTTP Status Codes and Errors](#http-status-codes-and-errors)
+- [Security and Privacy](#security-and-privacy)
+- [Design Decisions and Assumptions](#design-decisions-and-assumptions)
+- [Deployment](#deployment)
+- [Project Structure](#project-structure)
+
+---
+
+## How It Works
+
+1. **Submit.** A reporter picks a category, describes the concern and optionally adds an evidence URL. The server returns a private `case_code`.
+2. **Track.** The reporter uses the case code to check status, moderator updates, replies and evidence requests. No identity is needed at any point.
+3. **Moderate.** A moderator authenticates with a secret key, filters and reviews reports, updates their status, adds notes, and can request more evidence.
+4. **Resolve.** The report is marked `RESOLVED` or `DISMISSED`. The reporter can still see the final outcome with their case code.
 
 ---
 
@@ -46,17 +69,16 @@ https://github.com/TSsanjayy/WhistleDrop
 
 ## Tech Stack
 
-- Node.js
-- Express.js
-- SQLite
-- better-sqlite3
-- Multer
-- bcrypt
-- dotenv
-- HTML
-- CSS
-- JavaScript
-- Render
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js |
+| Framework | Express.js |
+| Database | SQLite (`better-sqlite3`) |
+| File uploads | Multer |
+| Hashing | bcrypt |
+| Configuration | dotenv |
+| Frontend | HTML, CSS, JavaScript |
+| Hosting | Render |
 
 ## Frontend
 
@@ -78,6 +100,8 @@ The API can also be used independently through Postman, cURL, or another HTTP cl
 
 ## Setup
 
+**Requirements:** Node.js 18 or newer.
+
 ```bash
 git clone https://github.com/TSsanjayy/WhistleDrop.git
 cd WhistleDrop
@@ -91,13 +115,17 @@ PORT=3000
 MODERATOR_KEY=your-secret-key
 ```
 
-Run:
+Start the server:
 
 ```bash
 npm start
 ```
 
-The server runs at `http://localhost:3000`.
+The server runs at `http://localhost:3000`. Verify it with:
+
+```bash
+curl http://localhost:3000/health
+```
 
 `.env` is listed in `.gitignore` and must never be committed. Use a long, random value for `MODERATOR_KEY`.
 
@@ -114,9 +142,12 @@ The server runs at `http://localhost:3000`.
 
 A report normally progresses through:
 
-```
-SUBMITTED → UNDER_REVIEW → RESOLVED
-                         ↘ DISMISSED
+```mermaid
+stateDiagram-v2
+    [*] --> SUBMITTED
+    SUBMITTED --> UNDER_REVIEW
+    UNDER_REVIEW --> RESOLVED
+    UNDER_REVIEW --> DISMISSED
 ```
 
 Status transitions are validated by the backend.
@@ -160,18 +191,26 @@ Moderators authenticate by sending the key in a request header:
 x-moderator-key: <MODERATOR_KEY>
 ```
 
+### Conventions
+
+- **Route parameters** use camelCase, such as `:caseCode`.
+- **JSON fields** use snake_case, such as `case_code`, `evidence_url` and `created_at`.
+- The value returned in `case_code` is what you put in the `:caseCode` part of the URL.
+
 ---
 
 ## Testing the API
 
 Test with Postman, cURL, or any HTTP client against the live URL or `http://localhost:3000`. Suggested order:
 
-1. `POST /reports` and save the returned `case_code`
+1. `POST /reports` and save the `case_code` from the response
 2. `GET /reports/:caseCode` to see the `SUBMITTED` status
 3. `GET /moderator/reports` with the moderator key
 4. `PATCH /moderator/reports/:id/status` to move the report forward
 5. `GET /reports/:caseCode` again to see the update
 6. Try invalid requests (wrong case code, missing fields, no key) to see the error handling
+
+In the examples below, `CASE_CODE` stands for the `case_code` value you received in step 1, and `YOUR_KEY` is your moderator key.
 
 ---
 
@@ -199,12 +238,12 @@ curl -X POST https://whistledrop-g7r5.onrender.com/reports \
 }
 ```
 
-Save the `case_code`. It cannot be recovered.
+Save the `case_code`. It cannot be recovered. `evidence_url` is optional.
 
 ### 2. Track a report
 
 ```bash
-curl https://whistledrop-g7r5.onrender.com/reports/<case_code>
+curl https://whistledrop-g7r5.onrender.com/reports/CASE_CODE
 ```
 
 `200 OK`
@@ -222,7 +261,24 @@ curl https://whistledrop-g7r5.onrender.com/reports/<case_code>
 }
 ```
 
-### 3. Moderator: list and filter reports
+### 3. Reply to moderators
+
+```bash
+curl -X POST https://whistledrop-g7r5.onrender.com/reports/CASE_CODE/reply \
+  -H "Content-Type: application/json" \
+  -d '{ "message": "The issue is still present as of today." }'
+```
+
+### 4. Upload additional evidence
+
+Available when a moderator has requested more evidence (`evidence_upload_enabled` is `true` in the tracking response).
+
+```bash
+curl -X POST https://whistledrop-g7r5.onrender.com/reports/CASE_CODE/evidence \
+  -F "file=@screenshot.png"
+```
+
+### 5. Moderator: list and filter reports
 
 ```bash
 curl "https://whistledrop-g7r5.onrender.com/moderator/reports?status=SUBMITTED&category=Security" \
@@ -245,7 +301,7 @@ curl "https://whistledrop-g7r5.onrender.com/moderator/reports?status=SUBMITTED&c
 
 No reporter information appears anywhere in this response.
 
-### 4. Moderator: update status
+### 6. Moderator: update status
 
 ```bash
 curl -X PATCH https://whistledrop-g7r5.onrender.com/moderator/reports/1/status \
@@ -260,11 +316,40 @@ curl -X PATCH https://whistledrop-g7r5.onrender.com/moderator/reports/1/status \
 { "id": 1, "status": "UNDER_REVIEW" }
 ```
 
-### 5. Error examples
+### 7. Moderator: clear a closed report
+
+```bash
+curl -X DELETE https://whistledrop-g7r5.onrender.com/moderator/reports/1 \
+  -H "x-moderator-key: YOUR_KEY"
+```
+
+Only reports that are `RESOLVED` or `DISMISSED` can be cleared.
+
+---
+
+## HTTP Status Codes and Errors
+
+Errors are returned as JSON in a consistent shape:
+
+```json
+{ "error": "message describing the problem" }
+```
+
+| Status | Meaning |
+|---|---|
+| `200 OK` | Request succeeded |
+| `201 Created` | Report created |
+| `400 Bad Request` | Missing or invalid data, or an invalid status change |
+| `401 Unauthorized` | Moderator key missing |
+| `403 Forbidden` | Moderator key incorrect |
+| `404 Not Found` | Unknown case code or report ID |
+| `500 Internal Server Error` | Unexpected server error, handled by the global error handler |
+
+### Error examples
 
 | Request | Response |
 |---|---|
-| Missing `description` on submit | `400` `{ "error": "description is required" }` |
+| Missing category or description on submit | `400` `{ "error": "category and description are required" }` |
 | Unknown category | `400` `{ "error": "Invalid category" }` |
 | Unknown case code | `404` `{ "error": "Report not found" }` |
 | Moderator route without key | `401` `{ "error": "Unauthorized" }` |
@@ -296,6 +381,7 @@ WhistleDrop is designed around anonymous reporting.
 - **Hashed case codes.** Only hashes are stored, so a database leak does not expose working codes.
 - **Shared moderator key.** A single secret protects moderator routes. This keeps the project simple; a production system would use per-moderator accounts with roles and audit logs.
 - **Server-side validation.** Categories, statuses and required fields are validated by the backend, not just the frontend.
+- **Layered structure.** Routes, controllers, middleware and models are separated so validation, auth and error handling live in one place each.
 - **SQLite for storage.** Chosen for zero-setup development. A hosted database would be used in production.
 - **Moderator replies are visible to reporters** through the case code, since it is the only communication channel.
 - **Assumption:** a lost case code cannot be recovered. Recovery would require identity, which defeats the purpose.
@@ -310,6 +396,8 @@ The application is deployed on Render's free web service.
 The free instance can spin down after inactivity, which may cause a cold start when the application is accessed again.
 
 The application currently uses SQLite and local file storage. Because the free Render instance does not provide persistent storage for this setup, database data and uploaded files should not be treated as permanent production storage.
+
+Render settings: build command `npm install`, start command `npm start`, with `MODERATOR_KEY` set in the service's environment variables.
 
 ---
 
