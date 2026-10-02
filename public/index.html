@@ -318,6 +318,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;bac
 @keyframes pop{from{opacity:0;transform:scale(1.7)}to{opacity:1;transform:scale(1)}}
 @keyframes glow{0%,100%{filter:drop-shadow(0 0 5px color-mix(in srgb,currentColor 30%,transparent))}50%{filter:drop-shadow(0 0 16px color-mix(in srgb,currentColor 70%,transparent))}}
 @keyframes float{0%,100%{translate:0 0}50%{translate:0 -4px}}
+.copy-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#111;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;
+  opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;z-index:9999}
+.copy-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:800px){#terminalStatus{position:relative;margin:16px 0 4px 6px;width:124px;height:124px}}
 @media(min-width:801px){#terminalStatus{right:15%;top:-30px}}
 </style>
@@ -693,6 +697,12 @@ form.addEventListener("submit", async e => {
     if (!res.ok) throw new Error(data.error || "Failed to submit report.");
 
     latestCaseCode = data.case_code;
+    try {
+      await navigator.clipboard.writeText(data.case_code);
+      showCopyToast();
+    } catch (err) {
+      console.log("Could not copy case code automatically.");
+    }
     $("caseBox").style.display = "block";
     $("caseBox").classList.remove("show"); void $("caseBox").offsetWidth; $("caseBox").classList.add("show");
     decryptCode($("caseCode"), data.case_code);
@@ -705,6 +715,16 @@ form.addEventListener("submit", async e => {
     setButtonLoading(submitBtn, false, "", "Submit report");
   }
 });
+
+function showCopyToast() {
+  const toast = document.getElementById("copyToast");
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
+}
 
 function startAnotherReport(){
   form.reset();
@@ -853,8 +873,6 @@ async function lookupCase(){
       data.evidence.forEach(i => thread.appendChild(el("div", `📎 ${i.file_name} — submitted ${formatDate(i.created_at)}`, "muted")));
     }
 
-    const latestNote = $("trackLatestNote");
-
     const notes = updates.filter(
       u => u.message && u.message.trim()
     );
@@ -866,12 +884,16 @@ async function lookupCase(){
     const seenNoteKey = `seenModeratorNote_${code}`;
     const seenNoteId = localStorage.getItem(seenNoteKey);
 
+    const latestNote = $("trackLatestNote");
+
     if (latestNoteId && latestNoteId !== seenNoteId) {
       $("trackNoteText").textContent = "Moderator has sent you a note";
-      latestNote.dataset.noteId = latestNoteId;
-      latestNote.dataset.noteKey = seenNoteKey;
       latestNote.style.display = "block";
+
+      // Mark this note as already shown
+      localStorage.setItem(seenNoteKey, latestNoteId);
     } else {
+      $("trackNoteText").textContent = "";
       latestNote.style.display = "none";
     }
 
@@ -1257,5 +1279,8 @@ document.addEventListener("keydown", e => {
   else if ($("modDetail").style.display === "block") closeModDetail();
 });
 </script>
+<div id="copyToast" class="copy-toast">
+  Code copied to clipboard
+</div>
 </body>
 </html>
