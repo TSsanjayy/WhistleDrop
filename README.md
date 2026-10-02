@@ -7,7 +7,9 @@ Users receive a private case code that they can use to track their report, recei
 Moderators can review and manage reports without being given the reporter's identity.
 
 **Live demo:** https://whistledrop-g7r5.onrender.com/
+
 **Health check:** https://whistledrop-g7r5.onrender.com/health
+
 **Repository:** https://github.com/TSsanjayy/WhistleDrop
 
 > The live demo runs on Render's free tier. If it has been idle, the first request may take 30-60 seconds while the instance wakes up.
