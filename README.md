@@ -40,7 +40,7 @@ Create a `.env` file in the project root:
 
 ```env
 PORT=3000
-MODERATOR_KEY=choose-a-long-random-secret
+MODERATOR_KEY=im7
 ```
 
 Run:
