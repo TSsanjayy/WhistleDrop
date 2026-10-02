@@ -2,7 +2,7 @@
 
 An anonymous reporting backend. Anyone can submit a report without an account, track it with a private case code, and communicate with moderators, who can manage reports but can never see who sent them.
 
-**Live demo:** [https://YOUR-APP.onrender.com](https://whistledrop-g7r5.onrender.com/)
+**Live demo:** (https://whistledrop-g7r5.onrender.com/)
 
 **Health check:** https://YOUR-APP.onrender.com/health
 
