@@ -24,11 +24,11 @@ async function deleteReportController(req, res, next) {
     }
 
     if (
-      report.status !== "SUBMITTED" &&
+      report.status !== "RESOLVED" &&
       report.status !== "DISMISSED"
     ) {
       return res.status(400).json({
-        error: "Only submitted or dismissed reports can be deleted."
+        error: "Only resolved or dismissed reports can be cleared"
       });
     }
 
